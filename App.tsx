@@ -328,6 +328,13 @@ ${partsDetails}
         }
       });
 
+      // Footnote for production costs
+      const summaryTableEnd = (doc as typeof doc & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
+      doc.setFontSize(8);
+      doc.setTextColor(120);
+      doc.text("* Производственные расходы включают амортизацию оборудования,", 14, summaryTableEnd + 3);
+      doc.text("  техническое обслуживание и контроль качества.", 14, summaryTableEnd + 7);
+
       // Footer
       doc.setFontSize(8);
       doc.setTextColor(150);
