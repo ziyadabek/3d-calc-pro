@@ -25,7 +25,7 @@ import {
   ResponsiveContainer,
   Tooltip
 } from 'recharts';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { loadCyrillicFonts } from './utils/pdfFonts';
 
@@ -485,8 +485,8 @@ ${partsDetails}
               onClick={handleGeneratePDF}
               disabled={pdfLoading}
               className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-base transition-all shadow-md active:scale-95 ${pdfLoading
-                  ? 'bg-blue-400 text-white/80 cursor-wait shadow-blue-100'
-                  : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'
+                ? 'bg-blue-400 text-white/80 cursor-wait shadow-blue-100'
+                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'
                 }`}
             >
               <FileDown size={18} className={pdfLoading ? 'animate-spin' : ''} />
