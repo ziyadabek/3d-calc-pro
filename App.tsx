@@ -335,12 +335,6 @@ ${partsDetails}
       doc.text("* Производственные расходы включают амортизацию оборудования,", 14, summaryTableEnd + 3);
       doc.text("  техническое обслуживание и контроль качества.", 14, summaryTableEnd + 7);
 
-      // Footer
-      doc.setFontSize(8);
-      doc.setTextColor(150);
-      doc.text("Сгенерировано в 3D Calc Pro", 14, 280);
-      doc.text("https://ziyadabek.github.io/3d-calc-pro/", 14, 285);
-
       doc.save("3d-calc-offer.pdf");
     } catch (error) {
       console.error('PDF generation failed:', error);
