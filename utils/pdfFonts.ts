@@ -1,52 +1,46 @@
 /// <reference types="vite/client" />
 import { jsPDF } from 'jspdf';
 
-let fontsLoaded = false;
+let fontBase64Cache: string | null = null;
 
 /**
  * Load Cyrillic-compatible font (Roboto Regular TTF) into jsPDF.
  * Uses local font file from public directory.
+ * Caches font data for reuse across multiple PDF instances.
  */
 export async function loadCyrillicFonts(doc: jsPDF): Promise<void> {
-    if (fontsLoaded) {
-        try {
-            doc.setFont('Roboto', 'normal');
-        } catch (e) {
-            console.warn('Font not available:', e);
-        }
-        return;
-    }
-
     try {
-        // Load from local public directory (works both in dev and production)
-        // Use import.meta.env.BASE_URL to handle Vite's base path
-        const fontPath = `${import.meta.env.BASE_URL}Roboto-Regular.ttf`;
-        const response = await fetch(fontPath);
+        // If we don't have cached font data, fetch it
+        if (!fontBase64Cache) {
+            const fontPath = `${import.meta.env.BASE_URL}Roboto-Regular.ttf`;
+            const response = await fetch(fontPath);
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const arrayBuffer = await response.arrayBuffer();
+
+            if (arrayBuffer.byteLength < 50000) {
+                throw new Error(`Font file too small: ${arrayBuffer.byteLength} bytes`);
+            }
+
+            console.log(`✅ Font loaded: ${arrayBuffer.byteLength} bytes`);
+            fontBase64Cache = arrayBufferToBase64(arrayBuffer);
         }
 
-        const arrayBuffer = await response.arrayBuffer();
-
-        if (arrayBuffer.byteLength < 50000) {
-            throw new Error(`Font file too small: ${arrayBuffer.byteLength} bytes`);
-        }
-
-        console.log(`✅ Font loaded: ${arrayBuffer.byteLength} bytes`);
-
-        const base64 = arrayBufferToBase64(arrayBuffer);
-
-        doc.addFileToVFS('Roboto-Regular.ttf', base64);
+        // Add font to THIS document instance (even if cached)
+        // This ensures every new jsPDF instance gets the font
+        doc.addFileToVFS('Roboto-Regular.ttf', fontBase64Cache);
         doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
         doc.setFont('Roboto', 'normal');
 
-        fontsLoaded = true;
-        console.log('✅ Cyrillic font loaded successfully');
+        console.log('✅ Cyrillic font registered in PDF');
 
     } catch (error) {
         console.error('❌ Failed to load Cyrillic font:', error);
         console.warn('⚠️ PDF will use default font. Cyrillic characters may display incorrectly.');
+        // Don't throw - let PDF generation continue with default font
     }
 }
 

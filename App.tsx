@@ -548,7 +548,7 @@ ${partsDetails}
               <ShieldAlert size={22} className="text-emerald-600 print:hidden" /> Детализация
             </h2>
 
-            <div className="h-48 mb-6 print:hidden">
+            <div className="h-48 min-h-48 mb-6 print:hidden">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
