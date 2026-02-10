@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { useState, useMemo } from 'react';
 import {
@@ -13,7 +12,11 @@ import {
   Coins,
   Share2,
   Printer,
-  CheckCircle2
+  CheckCircle2,
+  Plus,
+  Trash2,
+  FileText,
+  FileDown
 } from 'lucide-react';
 import {
   PieChart,
@@ -22,11 +25,13 @@ import {
   ResponsiveContainer,
   Tooltip
 } from 'recharts';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 import {
   MaterialType,
   ComplexityLevel,
-  CalcInputs,
+  PrintPart,
   CalcSettings,
   CalcResults
 } from './types';
@@ -35,65 +40,120 @@ import { ResultItem } from './components/ResultItem';
 import { SettingsModal } from './components/SettingsModal';
 
 const App: React.FC = () => {
-  const [inputs, setInputs] = useState<CalcInputs>({
-    weight: 0,
-    hours: 0,
-    materialType: MaterialType.PLA_PETG,
-    customMaterialPrice: DEFAULT_MATERIALS[MaterialType.PLA_PETG].pricePerKg,
-    complexity: ComplexityLevel.NORMAL,
-    labor: 0
-  });
+  const [parts, setParts] = useState<PrintPart[]>([
+    {
+      id: "1",
+      name: 'Деталь 1',
+      weight: 0,
+      hours: 0,
+      materialType: MaterialType.PLA_PETG,
+      materialPrice: DEFAULT_MATERIALS[MaterialType.PLA_PETG].pricePerKg,
+      complexity: ComplexityLevel.NORMAL
+    }
+  ]);
+  const [labor, setLabor] = useState(0);
 
   const [settings, setSettings] = useState<CalcSettings>(DEFAULT_SETTINGS);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const handleMaterialChange = (type: MaterialType) => {
-    setInputs(prev => ({
+  const addPart = () => {
+    setParts(prev => [
       ...prev,
-      materialType: type,
-      customMaterialPrice: DEFAULT_MATERIALS[type].pricePerKg
+      {
+        id: crypto.randomUUID(),
+        name: `Деталь ${prev.length + 1}`,
+        weight: 0,
+        hours: 0,
+        materialType: MaterialType.PLA_PETG,
+        materialPrice: DEFAULT_MATERIALS[MaterialType.PLA_PETG].pricePerKg,
+        complexity: ComplexityLevel.NORMAL
+      }
+    ]);
+  };
+
+  const removePart = (id: string) => {
+    if (parts.length > 1) {
+      setParts(prev => prev.filter(p => p.id !== id));
+    }
+  };
+
+  const updatePart = (id: string, field: keyof PrintPart, value: any) => {
+    setParts(prev => prev.map(p => {
+      if (p.id !== id) return p;
+
+      const updates: Partial<PrintPart> = { [field]: value };
+
+      // Update price if material type changes
+      if (field === 'materialType') {
+        updates.materialPrice = DEFAULT_MATERIALS[value as MaterialType].pricePerKg;
+      }
+
+      return { ...p, ...updates };
     }));
   };
 
   const results: CalcResults = useMemo(() => {
-    const matPrice = inputs.customMaterialPrice;
-    const materialCost = (inputs.weight / 1000) * matPrice;
-    const workCost = inputs.hours * settings.amortizationPerHour;
-    const electricityCost = inputs.hours * settings.electricityPerHour;
-    const laborCost = inputs.labor;
+    let totalMaterial = 0;
+    let totalWork = 0;
+    let totalElec = 0;
+    let totalMarkup = 0;
+    let totalComplexity = 0;
+    let totalBase = 0;
 
-    const baseSubtotal = materialCost + workCost + electricityCost + laborCost;
-    const markup = baseSubtotal * (settings.markupPercent / 100);
+    parts.forEach(part => {
+      const matCost = (part.weight / 1000) * part.materialPrice;
+      const work = part.hours * settings.amortizationPerHour;
+      const elec = part.hours * settings.electricityPerHour;
 
-    const factor = COMPLEXITY_MULTIPLIERS[inputs.complexity].factor;
-    const totalBeforeComplexity = baseSubtotal + markup;
-    const total = totalBeforeComplexity * factor;
-    const complexityBonus = total - totalBeforeComplexity;
+      const partBase = matCost + work + elec;
+      const partMarkup = partBase * (settings.markupPercent / 100);
+
+      const factor = COMPLEXITY_MULTIPLIERS[part.complexity].factor;
+      const partTotalBeforeComplexity = partBase + partMarkup;
+      const partTotal = partTotalBeforeComplexity * factor;
+
+      const partComplexityBonus = partTotal - partTotalBeforeComplexity;
+
+      totalMaterial += matCost;
+      totalWork += work;
+      totalElec += elec;
+      totalMarkup += partMarkup;
+      totalComplexity += partComplexityBonus;
+      totalBase += partBase;
+    });
+
+    const laborCost = labor;
+    const laborMarkup = labor * (settings.markupPercent / 100);
+    const finalTotal = totalBase + totalMarkup + totalComplexity + laborCost + laborMarkup;
 
     return {
-      materialCost,
-      workCost,
-      electricityCost,
-      laborCost,
-      subtotal: baseSubtotal,
-      markup,
-      complexityBonus,
-      total
+      materialCost: totalMaterial,
+      workCost: totalWork,
+      electricityCost: totalElec,
+      laborCost: laborCost,
+      subtotal: totalBase + laborCost,
+      markup: totalMarkup + laborMarkup,
+      complexityBonus: totalComplexity,
+      total: finalTotal
     };
-  }, [inputs, settings]);
+  }, [parts, labor, settings]);
 
   const handleCopyReport = async () => {
-    const materialName = DEFAULT_MATERIALS[inputs.materialType].name;
-    const complexityName = COMPLEXITY_MULTIPLIERS[inputs.complexity].name;
+    const partsDetails = parts.map((p, i) => `
+🔹 ${p.name}
+   ⚖️ Вес: ${p.weight} г
+   ⏱ Время: ${p.hours} ч
+   🧵 Материал: ${DEFAULT_MATERIALS[p.materialType].name}
+   ⚙️ Сложность: ${COMPLEXITY_MULTIPLIERS[p.complexity].name}
+`).join('\n');
+
     const report = `
 📊 ОТЧЕТ 3D ПЕЧАТИ (3D Calc Pro)
 ------------------------------
-🧵 Материал: ${materialName}
-⚖️ Вес: ${inputs.weight} г
-⏱ Время: ${inputs.hours} ч
-⚙️ Сложность: ${complexityName}
-🛠 Доп. услуги: ${inputs.labor.toLocaleString()} ₸
+${partsDetails}
+------------------------------
+🛠 Доп. услуги: ${labor.toLocaleString()} ₸
 ------------------------------
 💰 ИТОГО: ${Math.round(results.total).toLocaleString()} ₸
 ------------------------------
@@ -124,6 +184,84 @@ const App: React.FC = () => {
         alert('Не удалось скопировать отчет. Скопируйте вручную из консоли или проверьте права доступа.');
       }
     }
+  };
+
+  const handleGeneratePDF = () => {
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(37, 99, 235); // Blue
+    doc.text("3D Calc Pro", 14, 20);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text("Коммерческое предложение", 14, 26);
+
+    doc.setDrawColor(200);
+    doc.line(14, 30, 196, 30);
+
+    // Date
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    doc.text(`Дата: ${new Date().toLocaleDateString()}`, 14, 40);
+
+    // Parts Table
+    const tableBody = parts.map(part => [
+      part.name,
+      `${part.weight}г`,
+      `${part.hours}ч`,
+      DEFAULT_MATERIALS[part.materialType].name,
+      COMPLEXITY_MULTIPLIERS[part.complexity].name
+    ]);
+
+    autoTable(doc, {
+      startY: 50,
+      head: [['Название', 'Вес', 'Время', 'Материал', 'Сложность']],
+      body: tableBody,
+      theme: 'grid',
+      headStyles: { fillColor: [37, 99, 235] }
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+
+    // Financial Summary
+    doc.setFontSize(14);
+    doc.text("Итоговый расчет", 14, finalY);
+
+    const summaryData = [
+      ['Материалы', `${Math.round(results.materialCost).toLocaleString()} ₸`],
+      ['Работа оборудования', `${Math.round(results.workCost + results.electricityCost).toLocaleString()} ₸`],
+      ['Доп. услуги', `${Math.round(results.laborCost).toLocaleString()} ₸`],
+      ['Сложность и Маржа', `${Math.round(results.markup + results.complexityBonus).toLocaleString()} ₸`],
+      ['ИТОГО К ОПЛАТЕ', `${Math.round(results.total).toLocaleString()} ₸`]
+    ];
+
+    autoTable(doc, {
+      startY: finalY + 5,
+      body: summaryData,
+      theme: 'plain',
+      styles: { fontSize: 12, cellPadding: 2 },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 120 },
+        1: { halign: 'right' }
+      },
+      didParseCell: (data) => {
+        if (data.row.index === 4) {
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.textColor = [37, 99, 235];
+          data.cell.styles.fontSize = 14;
+        }
+      }
+    });
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("Сгенерировано в 3D Calc Pro", 14, 280);
+    doc.text("https://ziyadabek.github.io/3d-calc-pro/", 14, 285);
+
+    doc.save("3d-calc-offer.pdf");
   };
 
   const handlePrint = () => {
@@ -172,67 +310,85 @@ const App: React.FC = () => {
       <main className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Ввод данных */}
         <section className="lg:col-span-7 space-y-6 print:col-span-12">
-          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-md border border-slate-200 print:shadow-none print:border-none">
-            <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2 print:text-black">
-              <Layers size={22} className="text-blue-600 print:hidden" /> Ввод данных
-            </h2>
 
-            <div className="space-y-5">
-              <div className="grid grid-cols-2 gap-4">
+          {parts.map((part, index) => (
+            <div key={part.id} className="bg-white rounded-3xl p-6 md:p-8 shadow-md border border-slate-200 print:shadow-none print:border-none relative group transition-all hover:shadow-lg">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 print:text-black">
+                  <Layers size={22} className="text-blue-600 print:hidden" />
+                  <input
+                    type="text"
+                    value={part.name}
+                    onChange={(e) => updatePart(part.id, 'name', e.target.value)}
+                    className="bg-transparent border-b border-transparent focus:border-blue-500 outline-none hover:border-slate-300 transition-colors w-48"
+                  />
+                </h2>
+                {parts.length > 1 && (
+                  <button
+                    onClick={() => removePart(part.id)}
+                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                    title="Удалить деталь"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-5">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-600 uppercase ml-1">Вес (г)</label>
+                    <input
+                      type="number"
+                      value={part.weight || ''}
+                      onChange={(e) => updatePart(part.id, 'weight', parseFloat(e.target.value) || 0)}
+                      placeholder="0"
+                      className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg shadow-inner print:bg-white print:border-slate-300"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-600 uppercase ml-1">Время (ч)</label>
+                    <input
+                      type="number"
+                      value={part.hours || ''}
+                      onChange={(e) => updatePart(part.id, 'hours', parseFloat(e.target.value) || 0)}
+                      placeholder="0"
+                      className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg shadow-inner print:bg-white print:border-slate-300"
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-600 uppercase ml-1">Вес (г)</label>
-                  <input
-                    type="number"
-                    value={inputs.weight || ''}
-                    onChange={(e) => setInputs({ ...inputs, weight: parseFloat(e.target.value) || 0 })}
-                    placeholder="0"
-                    className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg shadow-inner print:bg-white print:border-slate-300"
-                  />
+                  <label className="text-sm font-bold text-slate-600 uppercase ml-1">Материал</label>
+                  <select
+                    value={part.materialType}
+                    onChange={(e) => updatePart(part.id, 'materialType', e.target.value as MaterialType)}
+                    className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg appearance-none cursor-pointer print:bg-white print:border-slate-300"
+                  >
+                    {Object.entries(DEFAULT_MATERIALS).map(([key, config]) => (
+                      <option key={key} value={key}>{config.name}</option>
+                    ))}
+                  </select>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-600 uppercase ml-1">Время (ч)</label>
-                  <input
-                    type="number"
-                    value={inputs.hours || ''}
-                    onChange={(e) => setInputs({ ...inputs, hours: parseFloat(e.target.value) || 0 })}
-                    placeholder="0"
-                    className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg shadow-inner print:bg-white print:border-slate-300"
-                  />
+
+                <div className="space-y-2 print:hidden">
+                  <label className="text-sm font-bold text-slate-600 uppercase ml-1">Цена за 1кг (₸)</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={part.materialPrice || ''}
+                      onChange={(e) => updatePart(part.id, 'materialPrice', parseFloat(e.target.value) || 0)}
+                      className="w-full pl-4 pr-12 py-4 bg-blue-50/50 border-2 border-blue-200 rounded-2xl focus:border-blue-600 outline-none font-black text-blue-900 text-xl"
+                    />
+                    <Coins className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-600" size={24} />
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-600 uppercase ml-1">Материал</label>
-                <select
-                  value={inputs.materialType}
-                  onChange={(e) => handleMaterialChange(e.target.value as MaterialType)}
-                  className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg appearance-none cursor-pointer print:bg-white print:border-slate-300"
-                >
-                  {Object.entries(DEFAULT_MATERIALS).map(([key, config]) => (
-                    <option key={key} value={key}>{config.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2 print:hidden">
-                <label className="text-sm font-bold text-slate-600 uppercase ml-1">Цена за 1кг (₸)</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={inputs.customMaterialPrice || ''}
-                    onChange={(e) => setInputs({ ...inputs, customMaterialPrice: parseFloat(e.target.value) || 0 })}
-                    className="w-full pl-4 pr-12 py-4 bg-blue-50/50 border-2 border-blue-200 rounded-2xl focus:border-blue-600 outline-none font-black text-blue-900 text-xl"
-                  />
-                  <Coins className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-600" size={24} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-600 uppercase ml-1">Сложность</label>
                   <select
-                    value={inputs.complexity}
-                    onChange={(e) => setInputs({ ...inputs, complexity: e.target.value as ComplexityLevel })}
+                    value={part.complexity}
+                    onChange={(e) => updatePart(part.id, 'complexity', e.target.value as ComplexityLevel)}
                     className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold print:bg-white print:border-slate-300"
                   >
                     {Object.entries(COMPLEXITY_MULTIPLIERS).map(([key, config]) => (
@@ -240,16 +396,31 @@ const App: React.FC = () => {
                     ))}
                   </select>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-600 uppercase ml-1">Доп. услуги (₸)</label>
-                  <input
-                    type="number"
-                    value={inputs.labor || ''}
-                    onChange={(e) => setInputs({ ...inputs, labor: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg shadow-inner print:bg-white print:border-slate-300"
-                  />
-                </div>
               </div>
+            </div>
+          ))}
+
+          <button
+            onClick={addPart}
+            className="w-full py-4 bg-white border-2 border-dashed border-slate-300 text-slate-500 rounded-3xl font-bold flex items-center justify-center gap-2 hover:border-blue-500 hover:text-blue-500 transition-all active:scale-[0.99] print:hidden"
+          >
+            <Plus size={24} />
+            Добавить деталь
+          </button>
+
+          <div className="bg-white rounded-3xl p-6 shadow-md border border-slate-200 print:shadow-none print:border-none">
+            <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <Wallet size={20} className="text-amber-500" />
+              Дополнительные услуги
+            </h2>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-600 uppercase ml-1">Постобработка / Сборка (₸)</label>
+              <input
+                type="number"
+                value={labor || ''}
+                onChange={(e) => setLabor(parseFloat(e.target.value) || 0)}
+                className="w-full px-4 py-4 bg-amber-50 border-2 border-amber-100 rounded-2xl focus:border-amber-500 outline-none font-bold text-lg shadow-inner print:bg-white print:border-slate-300 text-amber-900"
+              />
             </div>
           </div>
 
@@ -287,19 +458,19 @@ const App: React.FC = () => {
             <button
               onClick={handleCopyReport}
               className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-base transition-all shadow-md active:scale-95 ${copied
-                ? 'bg-emerald-600 text-white shadow-emerald-200'
-                : 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50 shadow-slate-200'
+                  ? 'bg-emerald-600 text-white shadow-emerald-200'
+                  : 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50 shadow-slate-200'
                 }`}
             >
               {copied ? <CheckCircle2 size={18} /> : <Share2 size={18} />}
               {copied ? 'Скопировано!' : 'Копировать'}
             </button>
             <button
-              onClick={handlePrint}
-              className="flex items-center justify-center gap-2 py-3 px-4 bg-slate-800 text-white rounded-xl font-bold text-base hover:bg-slate-900 transition-all shadow-md shadow-slate-200 active:scale-95"
+              onClick={handleGeneratePDF}
+              className="flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 text-white rounded-xl font-bold text-base hover:bg-blue-700 transition-all shadow-md shadow-blue-200 active:scale-95"
             >
-              <Printer size={18} />
-              Сохранить PDF
+              <FileDown size={18} />
+              КП (PDF)
             </button>
           </div>
         </section>

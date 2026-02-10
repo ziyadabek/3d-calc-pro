@@ -18,13 +18,19 @@ export interface MaterialConfig {
   pricePerKg: number;
 }
 
-export interface CalcInputs {
+export interface PrintPart {
+  id: string;
+  name: string;
   weight: number;
   hours: number;
   materialType: MaterialType;
-  customMaterialPrice: number;
+  materialPrice: number; // custom price for this part's material
   complexity: ComplexityLevel;
-  labor: number;
+}
+
+export interface CalcInputs {
+  parts: PrintPart[];
+  labor: number; // Global labor cost
 }
 
 export interface CalcSettings {
