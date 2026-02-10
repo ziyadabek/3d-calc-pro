@@ -97,7 +97,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
             </button>
 
             {showPrices && (
-              <div className="space-y-3 animate-in slide-in-from-top-2">
+              <div className="space-y-3 transition-all duration-300">
                 {Object.entries(DEFAULT_MATERIALS).map(([key, config]) => {
                   const materialType = key as MaterialType;
                   const colors = MATERIAL_COLORS[key] || MATERIAL_COLORS.CUSTOM;

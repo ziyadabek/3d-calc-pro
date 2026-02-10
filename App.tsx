@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Calculator,
   Settings,
@@ -11,11 +11,9 @@ import {
   ShieldAlert,
   Coins,
   Share2,
-  Printer,
   CheckCircle2,
   Plus,
   Trash2,
-  FileText,
   FileDown
 } from 'lucide-react';
 import {
@@ -34,12 +32,41 @@ import {
   ComplexityLevel,
   PrintPart,
   CalcSettings,
-  CalcResults,
-  MaterialPrices
+  CalcResults
 } from './types/index';
 import { DEFAULT_MATERIALS, DEFAULT_SETTINGS, COMPLEXITY_MULTIPLIERS } from './constants/index';
 import { ResultItem } from './components/ResultItem';
 import { SettingsModal } from './components/SettingsModal';
+
+const SETTINGS_KEY = '3dcalcpro_settings';
+
+function loadSettingsFromStorage(): CalcSettings {
+  try {
+    const stored = localStorage.getItem(SETTINGS_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Ensure materialPrices has all keys
+      return {
+        ...DEFAULT_SETTINGS,
+        ...parsed,
+        materialPrices: { ...DEFAULT_SETTINGS.materialPrices, ...(parsed.materialPrices || {}) }
+      };
+    }
+  } catch (e) {
+    console.warn('Failed to load settings:', e);
+  }
+  return DEFAULT_SETTINGS;
+}
+
+const MATERIAL_COLOR_DOT: Record<string, string> = {
+  PLA: 'bg-blue-500',
+  PETG: 'bg-emerald-500',
+  ABS: 'bg-amber-500',
+  ASA: 'bg-orange-500',
+  PA_CF: 'bg-red-500',
+  TPU: 'bg-purple-500',
+  CUSTOM: 'bg-slate-500'
+};
 
 const App: React.FC = () => {
   const [parts, setParts] = useState<PrintPart[]>([
@@ -55,10 +82,27 @@ const App: React.FC = () => {
   ]);
   const [labor, setLabor] = useState(0);
 
-  const [settings, setSettings] = useState<CalcSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<CalcSettings>(loadSettingsFromStorage);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch (e) {
+      console.warn('Failed to save settings:', e);
+    }
+  }, [settings]);
+
+  // Sync material prices: when settings prices change, update existing parts
+  useEffect(() => {
+    setParts(prev => prev.map(p => ({
+      ...p,
+      materialPrice: settings.materialPrices[p.materialType]
+    })));
+  }, [settings.materialPrices]);
 
   const addPart = () => {
     setParts(prev => [
@@ -219,19 +263,29 @@ ${partsDetails}
       doc.text(`Дата: ${new Date().toLocaleDateString()}`, 14, 40);
 
       // Parts Table
-      const tableBody = parts.map(part => [
-        part.name,
-        `${part.weight}г`,
-        `${part.hours}ч`,
-        DEFAULT_MATERIALS[part.materialType].name,
-        COMPLEXITY_MULTIPLIERS[part.complexity].name
-      ]);
+      const tableBody = parts.map(part => {
+        const matCost = (part.weight / 1000) * part.materialPrice;
+        const work = part.hours * settings.amortizationPerHour;
+        const elec = part.hours * settings.electricityPerHour;
+        const partBase = matCost + work + elec;
+        const partMarkup = partBase * (settings.markupPercent / 100);
+        const factor = COMPLEXITY_MULTIPLIERS[part.complexity].factor;
+        const partTotal = (partBase + partMarkup) * factor;
+        return [
+          part.name,
+          `${part.weight}г`,
+          `${part.hours}ч`,
+          DEFAULT_MATERIALS[part.materialType].name,
+          COMPLEXITY_MULTIPLIERS[part.complexity].name,
+          `${Math.round(partTotal).toLocaleString()} ₸`
+        ];
+      });
 
       const fontStyle = doc.getFontList()['Roboto'] ? { font: 'Roboto' } : {};
 
       autoTable(doc, {
         startY: 50,
-        head: [['Название', 'Вес', 'Время', 'Материал', 'Сложность']],
+        head: [['Название', 'Вес', 'Время', 'Материал', 'Сложность', 'Стоимость']],
         body: tableBody,
         theme: 'grid',
         headStyles: { fillColor: [37, 99, 235], ...fontStyle },
@@ -285,9 +339,6 @@ ${partsDetails}
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
 
   const chartData = useMemo(() => {
     const data = [
@@ -332,7 +383,7 @@ ${partsDetails}
         {/* Ввод данных */}
         <section className="lg:col-span-7 space-y-6 print:col-span-12">
 
-          {parts.map((part, index) => (
+          {parts.map((part) => (
             <div key={part.id} className="bg-white rounded-3xl p-6 md:p-8 shadow-md border border-slate-200 print:shadow-none print:border-none relative group transition-all hover:shadow-lg">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 print:text-black">
@@ -381,27 +432,17 @@ ${partsDetails}
 
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-600 uppercase ml-1">Материал</label>
-                  <select
-                    value={part.materialType}
-                    onChange={(e) => updatePart(part.id, 'materialType', e.target.value as MaterialType)}
-                    className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg appearance-none cursor-pointer print:bg-white print:border-slate-300"
-                  >
-                    {Object.entries(DEFAULT_MATERIALS).map(([key, config]) => (
-                      <option key={key} value={key}>{config.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2 print:hidden">
-                  <label className="text-sm font-bold text-slate-600 uppercase ml-1">Цена за 1кг (₸)</label>
                   <div className="relative">
-                    <input
-                      type="number"
-                      value={part.materialPrice || ''}
-                      onChange={(e) => updatePart(part.id, 'materialPrice', parseFloat(e.target.value) || 0)}
-                      className="w-full pl-4 pr-12 py-4 bg-blue-50/50 border-2 border-blue-200 rounded-2xl focus:border-blue-600 outline-none font-black text-blue-900 text-xl"
-                    />
-                    <Coins className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-600" size={24} />
+                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full ${MATERIAL_COLOR_DOT[part.materialType] || 'bg-slate-400'}`} />
+                    <select
+                      value={part.materialType}
+                      onChange={(e) => updatePart(part.id, 'materialType', e.target.value as MaterialType)}
+                      className="w-full pl-10 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg appearance-none cursor-pointer print:bg-white print:border-slate-300"
+                    >
+                      {Object.entries(DEFAULT_MATERIALS).map(([key, config]) => (
+                        <option key={key} value={key}>{config.name} — {(settings.materialPrices[key as MaterialType] || 0).toLocaleString()} ₸/кг</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -558,7 +599,7 @@ ${partsDetails}
       />
 
       <footer className="mt-12 pb-8 text-slate-400 text-[10px] font-black text-center uppercase tracking-widest print:mt-4 print:text-black">
-        <p>© 2024 3D CALC PRO — Усть-Каменогорск</p>
+        <p>© 2026 3D CALC PRO — Усть-Каменогорск</p>
       </footer>
     </div>
   );
