@@ -1,341 +1,47 @@
 import * as React from 'react';
-import { useState, useMemo, useEffect, useCallback } from 'react';
-import {
-  Calculator,
-  Settings,
-  Layers,
-  Clock,
-  Cpu,
-  Wallet,
-  TrendingUp,
-  ShieldAlert,
-  Coins,
-  Share2,
-  CheckCircle2,
-  Plus,
-  Trash2,
-  FileDown
-} from 'lucide-react';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip
-} from 'recharts';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { loadCyrillicFonts } from './utils/pdfFonts';
+import { useState } from 'react';
+import { Plus } from 'lucide-react';
 
-import {
-  MaterialType,
-  ComplexityLevel,
-  PrintPart,
-  CalcSettings,
-  CalcResults
-} from './types/index';
-import { DEFAULT_MATERIALS, DEFAULT_SETTINGS, COMPLEXITY_MULTIPLIERS } from './constants/index';
-import { ResultItem } from './components/ResultItem';
+// Hooks
+import { useSettings } from './hooks/useSettings';
+import { useParts } from './hooks/useParts';
+import { useCalculator } from './hooks/useCalculator';
+
+// Services
+import { copyReportToClipboard } from './services/reportGenerator';
+import { generatePDF } from './services/pdfGenerator';
+
+// Components
+import { Header } from './components/Header';
+import { PartCard } from './components/PartCard';
+import { AdditionalServices } from './components/AdditionalServices';
+import { PriceTotal } from './components/PriceTotal';
+import { ActionButtons } from './components/ActionButtons';
+import { DetailsSidebar } from './components/DetailsSidebar';
 import { SettingsModal } from './components/SettingsModal';
 
-const SETTINGS_KEY = '3dcalcpro_settings';
-
-function loadSettingsFromStorage(): CalcSettings {
-  try {
-    const stored = localStorage.getItem(SETTINGS_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Ensure materialPrices and materialMarkups have all keys
-      return {
-        ...DEFAULT_SETTINGS,
-        ...parsed,
-        materialPrices: { ...DEFAULT_SETTINGS.materialPrices, ...(parsed.materialPrices || {}) },
-        materialMarkups: { ...DEFAULT_SETTINGS.materialMarkups, ...(parsed.materialMarkups || {}) }
-      };
-    }
-  } catch (e) {
-    console.warn('Failed to load settings:', e);
-  }
-  return DEFAULT_SETTINGS;
-}
-
-const MATERIAL_COLOR_DOT: Record<string, string> = {
-  PLA: 'bg-blue-500',
-  PETG: 'bg-emerald-500',
-  ABS: 'bg-amber-500',
-  ASA: 'bg-orange-500',
-  PA_CF: 'bg-red-500',
-  TPU: 'bg-purple-500',
-  CUSTOM: 'bg-slate-500'
-};
-
 const App: React.FC = () => {
-  const [parts, setParts] = useState<PrintPart[]>([
-    {
-      id: "1",
-      name: 'Деталь 1',
-      weight: 0,
-      hours: 0,
-      materialType: MaterialType.PLA,
-      materialPrice: DEFAULT_MATERIALS[MaterialType.PLA].pricePerKg,
-      complexity: ComplexityLevel.NORMAL
-    }
-  ]);
+  const { settings, setSettings } = useSettings();
+  const { parts, addPart, removePart, updatePart } = useParts(settings);
   const [labor, setLabor] = useState(0);
+  const results = useCalculator(parts, labor, settings);
 
-  const [settings, setSettings] = useState<CalcSettings>(loadSettingsFromStorage);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
 
-  // Save settings to localStorage whenever they change
-  useEffect(() => {
-    try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    } catch (e) {
-      console.warn('Failed to save settings:', e);
-    }
-  }, [settings]);
-
-  // Sync material prices: when settings prices change, update existing parts
-  useEffect(() => {
-    setParts(prev => prev.map(p => ({
-      ...p,
-      materialPrice: settings.materialPrices[p.materialType]
-    })));
-  }, [settings.materialPrices]);
-
-  const addPart = () => {
-    setParts(prev => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        name: `Деталь ${prev.length + 1}`,
-        weight: 0,
-        hours: 0,
-        materialType: MaterialType.PLA,
-        materialPrice: settings.materialPrices[MaterialType.PLA],
-        complexity: ComplexityLevel.NORMAL
-      }
-    ]);
-  };
-
-  const removePart = (id: string) => {
-    if (parts.length > 1) {
-      setParts(prev => prev.filter(p => p.id !== id));
-    }
-  };
-
-  const updatePart = <K extends keyof PrintPart>(
-    id: string,
-    field: K,
-    value: PrintPart[K]
-  ) => {
-    setParts(prev => prev.map(p => {
-      if (p.id !== id) return p;
-
-      const updates: Partial<PrintPart> = { [field]: value };
-
-      // Update price if material type changes
-      if (field === 'materialType') {
-        updates.materialPrice = settings.materialPrices[value as MaterialType];
-      }
-
-      return { ...p, ...updates };
-    }));
-  };
-
-  const results: CalcResults = useMemo(() => {
-    let totalMaterial = 0;
-    let totalWork = 0;
-    let totalElec = 0;
-    let totalMarkup = 0;
-    let totalComplexity = 0;
-    let totalBase = 0;
-
-    parts.forEach(part => {
-      const matCost = (part.weight / 1000) * part.materialPrice;
-      const work = part.hours * settings.amortizationPerHour;
-      const elec = part.hours * settings.electricityPerHour;
-
-      const partBase = matCost + work + elec;
-
-      // Use individual material markup instead of global
-      const materialMarkup = settings.materialMarkups?.[part.materialType] || settings.markupPercent;
-      const partMarkup = partBase * (materialMarkup / 100);
-
-      const factor = COMPLEXITY_MULTIPLIERS[part.complexity].factor;
-      const partTotalBeforeComplexity = partBase + partMarkup;
-      const partTotal = partTotalBeforeComplexity * factor;
-
-      const partComplexityBonus = partTotal - partTotalBeforeComplexity;
-
-      totalMaterial += matCost;
-      totalWork += work;
-      totalElec += elec;
-      totalMarkup += partMarkup;
-      totalComplexity += partComplexityBonus;
-      totalBase += partBase;
-    });
-
-    const laborCost = labor;
-    const laborMarkup = labor * (settings.markupPercent / 100);
-    const finalTotal = totalBase + totalMarkup + totalComplexity + laborCost + laborMarkup;
-
-    return {
-      materialCost: totalMaterial,
-      workCost: totalWork,
-      electricityCost: totalElec,
-      laborCost: laborCost,
-      subtotal: totalBase + laborCost,
-      markup: totalMarkup + laborMarkup,
-      complexityBonus: totalComplexity,
-      total: finalTotal
-    };
-  }, [parts, labor, settings]);
-
   const handleCopyReport = async () => {
-    const partsDetails = parts.map((p, i) => `
-🔹 ${p.name}
-   ⚖️ Вес: ${p.weight} г
-   ⏱ Время: ${p.hours} ч
-   🧵 Материал: ${DEFAULT_MATERIALS[p.materialType].name}
-   ⚙️ Сложность: ${COMPLEXITY_MULTIPLIERS[p.complexity].name}
-`).join('\n');
-
-    const report = `
-📊 ОТЧЕТ 3D ПЕЧАТИ (3D Calc Pro)
-------------------------------
-${partsDetails}
-------------------------------
-🛠 Доп. услуги: ${labor.toLocaleString()} ₸
-------------------------------
-💰 ИТОГО: ${Math.round(results.total).toLocaleString()} ₸
-------------------------------
-📍 Усть-Каменогорск
-    `.trim();
-
-    try {
-      await navigator.clipboard.writeText(report);
+    const success = await copyReportToClipboard(parts, labor, results);
+    if (success) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Clipboard API failed:', err);
-      // Fallback method
-      try {
-        const textArea = document.createElement("textarea");
-        textArea.value = report;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-9999px";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch (fallbackErr) {
-        console.error('Fallback copy failed:', fallbackErr);
-        alert('Не удалось скопировать отчет. Скопируйте вручную из консоли или проверьте права доступа.');
-      }
     }
   };
 
   const handleGeneratePDF = async () => {
     setPdfLoading(true);
     try {
-      const doc = new jsPDF();
-
-      // Load Cyrillic-compatible font
-      await loadCyrillicFonts(doc);
-
-      // Header
-      doc.setFontSize(22);
-      doc.setTextColor(37, 99, 235); // Blue
-      doc.text("3D Calc Pro", 14, 20);
-
-      doc.setFontSize(10);
-      doc.setTextColor(100);
-      doc.text("Коммерческое предложение", 14, 26);
-
-      doc.setDrawColor(200);
-      doc.line(14, 30, 196, 30);
-
-      // Date
-      doc.setFontSize(12);
-      doc.setTextColor(0);
-      doc.text(`Дата: ${new Date().toLocaleDateString()}`, 14, 40);
-
-      // Parts Table
-      const tableBody = parts.map(part => {
-        const matCost = (part.weight / 1000) * part.materialPrice;
-        const work = part.hours * settings.amortizationPerHour;
-        const elec = part.hours * settings.electricityPerHour;
-        const partBase = matCost + work + elec;
-        const materialMarkup = settings.materialMarkups?.[part.materialType] || settings.markupPercent;
-        const partMarkup = partBase * (materialMarkup / 100);
-        const factor = COMPLEXITY_MULTIPLIERS[part.complexity].factor;
-        const partTotal = (partBase + partMarkup) * factor;
-        return [
-          part.name,
-          `${part.weight}г`,
-          `${part.hours}ч`,
-          DEFAULT_MATERIALS[part.materialType].name,
-          COMPLEXITY_MULTIPLIERS[part.complexity].name,
-          `${Math.round(partTotal).toLocaleString()} ₸`
-        ];
-      });
-
-      const fontStyle = doc.getFontList()['Roboto'] ? { font: 'Roboto' } : {};
-
-      autoTable(doc, {
-        startY: 50,
-        head: [['Название', 'Вес', 'Время', 'Материал', 'Сложность', 'Стоимость']],
-        body: tableBody,
-        theme: 'grid',
-        headStyles: { fillColor: [37, 99, 235], ...fontStyle },
-        styles: { ...fontStyle }
-      });
-
-      const finalY = (doc as typeof doc & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
-
-      // Financial Summary
-      doc.setFontSize(14);
-      doc.text("Итоговый расчет", 14, finalY);
-
-      const summaryData = [
-        ['Материалы', `${Math.round(results.materialCost).toLocaleString()} ₸`],
-        ['Производственные расходы', `${Math.round(results.workCost + results.electricityCost + results.markup + results.complexityBonus).toLocaleString()} ₸`],
-        ['Доп. услуги', `${Math.round(results.laborCost).toLocaleString()} ₸`],
-        ['ИТОГО К ОПЛАТЕ', `${Math.round(results.total).toLocaleString()} ₸`]
-      ];
-
-      autoTable(doc, {
-        startY: finalY + 5,
-        body: summaryData,
-        theme: 'plain',
-        styles: { fontSize: 12, cellPadding: 2, ...fontStyle },
-        columnStyles: {
-          0: { fontStyle: 'bold', cellWidth: 120 },
-          1: { halign: 'right' }
-        },
-        didParseCell: (data) => {
-          if (data.row.index === 3) {
-            data.cell.styles.fontStyle = 'bold';
-            data.cell.styles.textColor = [37, 99, 235];
-            data.cell.styles.fontSize = 14;
-          }
-        }
-      });
-
-      // Footnote for production costs
-      const summaryTableEnd = (doc as typeof doc & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
-      doc.setFontSize(8);
-      doc.setTextColor(120);
-      doc.text("* Производственные расходы включают амортизацию оборудования,", 14, summaryTableEnd + 3);
-      doc.text("  техническое обслуживание и контроль качества.", 14, summaryTableEnd + 7);
-
-      doc.save("3d-calc-offer.pdf");
+      await generatePDF(parts, settings, results);
     } catch (error) {
       console.error('PDF generation failed:', error);
       alert('Ошибка при генерации PDF. Попробуйте еще раз.');
@@ -344,127 +50,21 @@ ${partsDetails}
     }
   };
 
-
-  const chartData = useMemo(() => {
-    const data = [
-      { name: 'Пластик', value: results.materialCost },
-      { name: 'Принтер', value: results.workCost },
-      { name: 'Энергия', value: results.electricityCost },
-      { name: 'Труд', value: results.laborCost },
-      { name: 'Прибыль', value: results.markup },
-      { name: 'Сложность', value: results.complexityBonus },
-    ].filter(d => d.value > 0);
-
-    if (data.length === 0) {
-      return [{ name: 'Нет данных', value: 1, isEmpty: true }];
-    }
-
-    return data;
-  }, [results]);
-
-  const COLORS = ['#2563eb', '#7c3aed', '#059669', '#d97706', '#dc2626', '#4f46e5'];
-
   return (
     <div className="min-h-screen p-4 md:p-8 flex flex-col items-center bg-slate-50 print:bg-white print:p-0">
-      <header className="w-full max-w-4xl flex justify-between items-center mb-8 print:hidden">
-        <div className="flex items-center gap-3">
-          <div className="bg-blue-600 p-3 rounded-2xl text-white shadow-xl shadow-blue-200">
-            <Calculator size={32} strokeWidth={2.5} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 leading-none tracking-tight">3D Calc Pro</h1>
-            <p className="text-slate-500 text-sm font-bold mt-1 uppercase tracking-wider">Калькулятор Печати</p>
-          </div>
-        </div>
-        <button
-          onClick={() => setIsSettingsOpen(true)}
-          className="p-3 bg-white shadow-sm border border-slate-200 rounded-2xl hover:bg-blue-50 hover:border-blue-200 transition-all text-slate-700"
-        >
-          <Settings size={24} />
-        </button>
-      </header>
+      <Header onSettingsClick={() => setIsSettingsOpen(true)} />
 
       <main className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Ввод данных */}
         <section className="lg:col-span-7 space-y-6 print:col-span-12">
-
           {parts.map((part) => (
-            <div key={part.id} className="bg-white rounded-3xl p-6 md:p-8 shadow-md border border-slate-200 print:shadow-none print:border-none relative group transition-all hover:shadow-lg">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2 print:text-black">
-                  <Layers size={22} className="text-blue-600 print:hidden" />
-                  <input
-                    type="text"
-                    value={part.name}
-                    onChange={(e) => updatePart(part.id, 'name', e.target.value)}
-                    className="bg-transparent border-b border-transparent focus:border-blue-500 outline-none hover:border-slate-300 transition-colors w-48"
-                  />
-                </h2>
-                {parts.length > 1 && (
-                  <button
-                    onClick={() => removePart(part.id)}
-                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                    title="Удалить деталь"
-                  >
-                    <Trash2 size={20} />
-                  </button>
-                )}
-              </div>
-
-              <div className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-600 uppercase ml-1">Вес (г)</label>
-                    <input
-                      type="number"
-                      value={part.weight || ''}
-                      onChange={(e) => updatePart(part.id, 'weight', parseFloat(e.target.value) || 0)}
-                      placeholder="0"
-                      className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg shadow-inner print:bg-white print:border-slate-300"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-600 uppercase ml-1">Время (ч)</label>
-                    <input
-                      type="number"
-                      value={part.hours || ''}
-                      onChange={(e) => updatePart(part.id, 'hours', parseFloat(e.target.value) || 0)}
-                      placeholder="0"
-                      className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg shadow-inner print:bg-white print:border-slate-300"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-600 uppercase ml-1">Материал</label>
-                  <div className="relative">
-                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full ${MATERIAL_COLOR_DOT[part.materialType] || 'bg-slate-400'}`} />
-                    <select
-                      value={part.materialType}
-                      onChange={(e) => updatePart(part.id, 'materialType', e.target.value as MaterialType)}
-                      className="w-full pl-10 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg appearance-none cursor-pointer print:bg-white print:border-slate-300"
-                    >
-                      {Object.entries(DEFAULT_MATERIALS).map(([key, config]) => (
-                        <option key={key} value={key}>{config.name} — {(settings.materialPrices[key as MaterialType] || 0).toLocaleString()} ₸/кг</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-600 uppercase ml-1">Сложность</label>
-                  <select
-                    value={part.complexity}
-                    onChange={(e) => updatePart(part.id, 'complexity', e.target.value as ComplexityLevel)}
-                    className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold print:bg-white print:border-slate-300"
-                  >
-                    {Object.entries(COMPLEXITY_MULTIPLIERS).map(([key, config]) => (
-                      <option key={key} value={key}>{config.name} (x{config.factor})</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
+            <PartCard
+              key={part.id}
+              part={part}
+              canDelete={parts.length > 1}
+              settings={settings}
+              onUpdate={(field, value) => updatePart(part.id, field, value)}
+              onDelete={() => removePart(part.id)}
+            />
           ))}
 
           <button
@@ -475,124 +75,20 @@ ${partsDetails}
             Добавить деталь
           </button>
 
-          <div className="bg-white rounded-3xl p-6 shadow-md border border-slate-200 print:shadow-none print:border-none">
-            <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-              <Wallet size={20} className="text-amber-500" />
-              Дополнительные услуги
-            </h2>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-600 uppercase ml-1">Постобработка / Сборка (₸)</label>
-              <input
-                type="number"
-                value={labor || ''}
-                onChange={(e) => setLabor(parseFloat(e.target.value) || 0)}
-                className="w-full px-4 py-4 bg-amber-50 border-2 border-amber-100 rounded-2xl focus:border-amber-500 outline-none font-bold text-lg shadow-inner print:bg-white print:border-slate-300 text-amber-900"
-              />
-            </div>
-          </div>
+          <AdditionalServices labor={labor} onLaborChange={setLabor} />
 
-          <div className="bg-slate-900 rounded-3xl p-6 shadow-xl text-white relative overflow-hidden print:bg-white print:text-black print:shadow-none print:border-2 print:border-slate-900">
-            <div className="relative z-10">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-base font-bold uppercase tracking-widest text-blue-400 print:text-slate-600">Итоговая цена</h3>
-                <TrendingUp size={24} className="text-emerald-400 opacity-80 print:hidden" />
-              </div>
-              <div className="flex items-baseline gap-2 mb-4">
-                <span className="text-5xl font-black text-white tabular-nums tracking-tighter print:text-black">
-                  {Math.round(results.total).toLocaleString()}
-                </span>
-                <span className="text-2xl font-bold text-blue-400 opacity-80 print:text-slate-900">₸</span>
-              </div>
+          <PriceTotal results={results} />
 
-              <div className="flex flex-wrap gap-2 print:hidden">
-                <div className="px-3 py-1.5 bg-white/10 rounded-lg border border-white/10 flex items-center gap-2 backdrop-blur-md">
-                  <span className="text-[10px] font-black uppercase opacity-60">Маржа:</span>
-                  <span className="text-emerald-400 font-bold text-sm">+{Math.round(results.markup).toLocaleString()} ₸</span>
-                </div>
-                {results.complexityBonus > 0 && (
-                  <div className="px-3 py-1.5 bg-indigo-500/20 rounded-lg border border-indigo-500/20 flex items-center gap-2 backdrop-blur-md">
-                    <span className="text-[10px] font-black uppercase opacity-60">Сложность:</span>
-                    <span className="text-indigo-300 font-bold text-sm">+{Math.round(results.complexityBonus).toLocaleString()} ₸</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-blue-600/20 rounded-full blur-[60px] print:hidden"></div>
-          </div>
-
-          {/* Кнопки действий */}
-          <div className="grid grid-cols-2 gap-3 print:hidden">
-            <button
-              onClick={handleCopyReport}
-              className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-base transition-all shadow-md active:scale-95 ${copied
-                ? 'bg-emerald-600 text-white shadow-emerald-200'
-                : 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50 shadow-slate-200'
-                }`}
-            >
-              {copied ? <CheckCircle2 size={18} /> : <Share2 size={18} />}
-              {copied ? 'Скопировано!' : 'Копировать'}
-            </button>
-            <button
-              onClick={handleGeneratePDF}
-              disabled={pdfLoading}
-              className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-base transition-all shadow-md active:scale-95 ${pdfLoading
-                ? 'bg-blue-400 text-white/80 cursor-wait shadow-blue-100'
-                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'
-                }`}
-            >
-              <FileDown size={18} className={pdfLoading ? 'animate-spin' : ''} />
-              {pdfLoading ? 'Загрузка...' : 'КП (PDF)'}
-            </button>
-          </div>
+          <ActionButtons
+            copied={copied}
+            pdfLoading={pdfLoading}
+            onCopyReport={handleCopyReport}
+            onGeneratePDF={handleGeneratePDF}
+          />
         </section>
 
-        {/* Детализация */}
         <section className="lg:col-span-5 space-y-6 print:col-span-12">
-          <div className="bg-white rounded-3xl p-6 shadow-md border border-slate-200 sticky top-8 print:relative print:shadow-none print:border-none">
-            <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-              <ShieldAlert size={22} className="text-emerald-600 print:hidden" /> Детализация
-            </h2>
-
-            <div className="h-48 min-h-48 mb-6 print:hidden">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {chartData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={(entry as any).isEmpty ? '#f1f5f9' : COLORS[index % COLORS.length]}
-                        stroke={(entry as any).isEmpty ? '#cbd5e1' : 'none'}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(v: any) => `${Math.round(v)} ₸`} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="space-y-3">
-              <ResultItem icon={<Layers size={20} />} label="Материал" value={results.materialCost} color="text-blue-600" />
-              <ResultItem icon={<Clock size={20} />} label="Принтер" value={results.workCost} color="text-purple-600" />
-              <ResultItem icon={<Cpu size={20} />} label="Энергия" value={results.electricityCost} color="text-emerald-600" />
-              <ResultItem icon={<Wallet size={20} />} label="Работа" value={results.laborCost} color="text-amber-600" />
-              <ResultItem icon={<TrendingUp size={20} />} label="Наценка" value={results.markup + results.complexityBonus} color="text-indigo-600" />
-            </div>
-
-            <div className="mt-6 pt-6 border-t border-slate-100">
-              <div className="flex justify-between items-center text-slate-900 font-black">
-                <span className="text-sm uppercase opacity-50">Себестоимость</span>
-                <span className="text-lg">{Math.round(results.subtotal).toLocaleString()} ₸</span>
-              </div>
-            </div>
-          </div>
+          <DetailsSidebar results={results} />
         </section>
       </main>
 
