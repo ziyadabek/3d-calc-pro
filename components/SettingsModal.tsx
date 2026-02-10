@@ -95,6 +95,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
             <p className="text-xs text-slate-400 ml-1">Только для доп. услуг (постобработка, сборка)</p>
           </div>
 
+          <div className="space-y-2">
+            <label className="text-sm font-black text-slate-500 uppercase">Коэффициент брака</label>
+            <div className="relative">
+              <input
+                type="number"
+                step="0.01"
+                value={settings.wasteFactor}
+                onChange={(e) => setSettings({ ...settings, wasteFactor: parseFloat(e.target.value) || 1.0 })}
+                className="w-full px-5 py-4 bg-amber-50 border-2 border-amber-100 rounded-2xl focus:border-amber-500 outline-none font-bold text-lg text-amber-900"
+              />
+              <span className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-amber-400 text-xl">×</span>
+            </div>
+            <p className="text-xs text-slate-400 ml-1">1.1 = +10% на брак и непредвиденные расходы</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-black text-slate-500 uppercase">Минимальная цена заказа (₸)</label>
+            <input
+              type="number"
+              value={settings.minOrderPrice}
+              onChange={(e) => setSettings({ ...settings, minOrderPrice: parseFloat(e.target.value) || 0 })}
+              className="w-full px-5 py-4 bg-emerald-50 border-2 border-emerald-100 rounded-2xl focus:border-emerald-500 outline-none font-bold text-lg text-emerald-900"
+            />
+            <p className="text-xs text-slate-400 ml-1">Защита от убыточных мелких заказов</p>
+          </div>
+
           {/* Material prices section */}
           <div className="border-t border-slate-100 pt-6">
             <button

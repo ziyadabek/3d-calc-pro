@@ -16,7 +16,8 @@ export function useCalculator(parts: PrintPart[], labor: number, settings: CalcS
             const work = part.hours * settings.amortizationPerHour;
             const elec = part.hours * settings.electricityPerHour;
 
-            const partBase = matCost + work + elec;
+            // Применяем коэффициент брака к себестоимости
+            const partBase = (matCost + work + elec) * settings.wasteFactor;
 
             // Use individual material markup instead of global
             const materialMarkup = settings.materialMarkups?.[part.materialType] || settings.markupPercent;
@@ -38,7 +39,10 @@ export function useCalculator(parts: PrintPart[], labor: number, settings: CalcS
 
         const laborCost = labor;
         const laborMarkup = labor * (settings.markupPercent / 100);
-        const finalTotal = totalBase + totalMarkup + totalComplexity + laborCost + laborMarkup;
+        const calculatedTotal = totalBase + totalMarkup + totalComplexity + laborCost + laborMarkup;
+
+        // Применяем минимальную цену заказа
+        const finalTotal = Math.max(calculatedTotal, settings.minOrderPrice);
 
         return {
             materialCost: totalMaterial,

@@ -43,5 +43,7 @@ export const DEFAULT_SETTINGS: CalcSettings = {
   electricityPerHour: 40,
   markupPercent: 200, // deprecated but kept for backwards compat
   materialPrices: { ...DEFAULT_MATERIAL_PRICES },
-  materialMarkups: { ...DEFAULT_MATERIAL_MARKUPS }
+  materialMarkups: { ...DEFAULT_MATERIAL_MARKUPS },
+  wasteFactor: 1.1, // +10% на брак и непредвиденные расходы
+  minOrderPrice: 2000 // минимум 2000₸ за заказ
 };

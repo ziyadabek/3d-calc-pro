@@ -58,6 +58,8 @@ export interface CalcSettings {
   markupPercent: number; // deprecated - kept for backwards compatibility
   materialPrices: MaterialPrices;
   materialMarkups: MaterialMarkups;
+  wasteFactor: number; // коэффициент брака (например, 1.1 = +10%)
+  minOrderPrice: number; // минимальная цена заказа в ₸
 }
 
 export interface CalcResults {
