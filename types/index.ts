@@ -42,11 +42,22 @@ export interface MaterialPrices {
   [MaterialType.CUSTOM]: number;
 }
 
+export interface MaterialMarkups {
+  [MaterialType.PLA]: number;
+  [MaterialType.PETG]: number;
+  [MaterialType.ABS]: number;
+  [MaterialType.ASA]: number;
+  [MaterialType.PA_CF]: number;
+  [MaterialType.TPU]: number;
+  [MaterialType.CUSTOM]: number;
+}
+
 export interface CalcSettings {
   amortizationPerHour: number;
   electricityPerHour: number;
-  markupPercent: number;
+  markupPercent: number; // deprecated - kept for backwards compatibility
   materialPrices: MaterialPrices;
+  materialMarkups: MaterialMarkups;
 }
 
 export interface CalcResults {

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Check, Settings, ChevronDown, ChevronUp, Coins } from 'lucide-react';
+import { X, Check, Settings, ChevronDown, ChevronUp, Coins, TrendingUp } from 'lucide-react';
 import { CalcSettings, MaterialType } from '../types/index';
 import { DEFAULT_MATERIALS } from '../constants/index';
 
@@ -23,6 +23,7 @@ const MATERIAL_COLORS: Record<string, { bg: string; border: string; text: string
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings, setSettings }) => {
   const [showPrices, setShowPrices] = useState(true);
+  const [showMarkups, setShowMarkups] = useState(true);
 
   if (!isOpen) return null;
 
@@ -32,6 +33,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
       materialPrices: {
         ...settings.materialPrices,
         [materialType]: price
+      }
+    });
+  };
+
+  const updateMaterialMarkup = (materialType: MaterialType, markup: number) => {
+    setSettings({
+      ...settings,
+      materialMarkups: {
+        ...settings.materialMarkups,
+        [materialType]: markup
       }
     });
   };
@@ -71,7 +82,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-black text-slate-500 uppercase">Наценка (%)</label>
+            <label className="text-sm font-black text-slate-500 uppercase">Наценка на труд (%)</label>
             <div className="relative">
               <input
                 type="number"
@@ -81,6 +92,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
               />
               <span className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-blue-400 text-xl">%</span>
             </div>
+            <p className="text-xs text-slate-400 ml-1">Только для доп. услуг (постобработка, сборка)</p>
           </div>
 
           {/* Material prices section */}
@@ -114,6 +126,52 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                           className={`w-full pl-4 pr-16 py-3 ${colors.bg} border-2 ${colors.border} rounded-xl focus:ring-2 focus:ring-blue-200 outline-none font-bold text-base ${colors.text} transition-all`}
                         />
                         <span className={`absolute right-4 top-1/2 -translate-y-1/2 font-bold text-xs ${colors.icon} opacity-70`}>₸/кг</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Material markups section */}
+          <div className="border-t border-slate-100 pt-6">
+            <button
+              onClick={() => setShowMarkups(!showMarkups)}
+              className="w-full flex items-center justify-between text-lg font-black text-slate-800 mb-4 hover:text-blue-600 transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <TrendingUp size={22} className="text-emerald-600" />
+                Наценки на пластики (%)
+              </span>
+              {showMarkups ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            </button>
+
+            {showMarkups && (
+              <div className="space-y-3 transition-all duration-300">
+                {Object.entries(DEFAULT_MATERIALS).map(([key, config]) => {
+                  const materialType = key as MaterialType;
+                  const colors = MATERIAL_COLORS[key] || MATERIAL_COLORS.CUSTOM;
+                  const currentPrice = settings.materialPrices[materialType] || 0;
+                  const currentMarkup = settings.materialMarkups?.[materialType] || settings.markupPercent;
+                  const sellPricePerGram = (currentPrice / 1000) * (1 + currentMarkup / 100);
+
+                  return (
+                    <div key={key} className="space-y-1">
+                      <label className={`text-xs font-black uppercase tracking-wider ${colors.icon} flex justify-between`}>
+                        <span>{config.name}</span>
+                        <span className="font-normal text-[10px] opacity-70">
+                          → {sellPricePerGram.toFixed(1)} ₸/г
+                        </span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={settings.materialMarkups?.[materialType] || 0}
+                          onChange={(e) => updateMaterialMarkup(materialType, parseFloat(e.target.value) || 0)}
+                          className={`w-full pl-4 pr-12 py-3 ${colors.bg} border-2 ${colors.border} rounded-xl focus:ring-2 focus:ring-emerald-200 outline-none font-bold text-base ${colors.text} transition-all`}
+                        />
+                        <span className={`absolute right-4 top-1/2 -translate-y-1/2 font-bold text-xs ${colors.icon} opacity-70`}>%</span>
                       </div>
                     </div>
                   );

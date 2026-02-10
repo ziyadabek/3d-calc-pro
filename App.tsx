@@ -45,11 +45,12 @@ function loadSettingsFromStorage(): CalcSettings {
     const stored = localStorage.getItem(SETTINGS_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      // Ensure materialPrices has all keys
+      // Ensure materialPrices and materialMarkups have all keys
       return {
         ...DEFAULT_SETTINGS,
         ...parsed,
-        materialPrices: { ...DEFAULT_SETTINGS.materialPrices, ...(parsed.materialPrices || {}) }
+        materialPrices: { ...DEFAULT_SETTINGS.materialPrices, ...(parsed.materialPrices || {}) },
+        materialMarkups: { ...DEFAULT_SETTINGS.materialMarkups, ...(parsed.materialMarkups || {}) }
       };
     }
   } catch (e) {
@@ -158,7 +159,10 @@ const App: React.FC = () => {
       const elec = part.hours * settings.electricityPerHour;
 
       const partBase = matCost + work + elec;
-      const partMarkup = partBase * (settings.markupPercent / 100);
+
+      // Use individual material markup instead of global
+      const materialMarkup = settings.materialMarkups?.[part.materialType] || settings.markupPercent;
+      const partMarkup = partBase * (materialMarkup / 100);
 
       const factor = COMPLEXITY_MULTIPLIERS[part.complexity].factor;
       const partTotalBeforeComplexity = partBase + partMarkup;
@@ -268,7 +272,8 @@ ${partsDetails}
         const work = part.hours * settings.amortizationPerHour;
         const elec = part.hours * settings.electricityPerHour;
         const partBase = matCost + work + elec;
-        const partMarkup = partBase * (settings.markupPercent / 100);
+        const materialMarkup = settings.materialMarkups?.[part.materialType] || settings.markupPercent;
+        const partMarkup = partBase * (materialMarkup / 100);
         const factor = COMPLEXITY_MULTIPLIERS[part.complexity].factor;
         const partTotal = (partBase + partMarkup) * factor;
         return [

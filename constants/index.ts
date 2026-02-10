@@ -1,14 +1,24 @@
 
-import { MaterialType, MaterialConfig, CalcSettings, ComplexityLevel, MaterialPrices } from '../types';
+import { MaterialType, MaterialConfig, CalcSettings, ComplexityLevel, MaterialPrices, MaterialMarkups } from '../types';
 
 export const DEFAULT_MATERIAL_PRICES: MaterialPrices = {
   [MaterialType.PLA]: 11000,
-  [MaterialType.PETG]: 9000,
+  [MaterialType.PETG]: 8500, // 17000₸ за 2кг
   [MaterialType.ABS]: 10000,
   [MaterialType.ASA]: 18000,
   [MaterialType.PA_CF]: 29000,
   [MaterialType.TPU]: 13000,
   [MaterialType.CUSTOM]: 10000
+};
+
+export const DEFAULT_MATERIAL_MARKUPS: MaterialMarkups = {
+  [MaterialType.PLA]: 200,      // 11₸ → ~33₸/г
+  [MaterialType.PETG]: 225,     // 8.5₸ → ~27₸/г
+  [MaterialType.ABS]: 180,      // 10₸ → ~28₸/г
+  [MaterialType.ASA]: 150,      // 18₸ → ~45₸/г
+  [MaterialType.PA_CF]: 210,    // 29₸ → ~90₸/г
+  [MaterialType.TPU]: 170,      // 13₸ → ~35₸/г
+  [MaterialType.CUSTOM]: 150
 };
 
 export const DEFAULT_MATERIALS: Record<MaterialType, MaterialConfig> = {
@@ -31,6 +41,7 @@ export const COMPLEXITY_MULTIPLIERS: Record<ComplexityLevel, { name: string, fac
 export const DEFAULT_SETTINGS: CalcSettings = {
   amortizationPerHour: 250,
   electricityPerHour: 40,
-  markupPercent: 15,
-  materialPrices: { ...DEFAULT_MATERIAL_PRICES }
+  markupPercent: 200, // deprecated but kept for backwards compat
+  materialPrices: { ...DEFAULT_MATERIAL_PRICES },
+  materialMarkups: { ...DEFAULT_MATERIAL_MARKUPS }
 };
