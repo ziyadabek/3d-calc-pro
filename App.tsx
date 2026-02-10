@@ -34,7 +34,8 @@ import {
   ComplexityLevel,
   PrintPart,
   CalcSettings,
-  CalcResults
+  CalcResults,
+  MaterialPrices
 } from './types/index';
 import { DEFAULT_MATERIALS, DEFAULT_SETTINGS, COMPLEXITY_MULTIPLIERS } from './constants/index';
 import { ResultItem } from './components/ResultItem';
@@ -47,8 +48,8 @@ const App: React.FC = () => {
       name: 'Деталь 1',
       weight: 0,
       hours: 0,
-      materialType: MaterialType.PLA_PETG,
-      materialPrice: DEFAULT_MATERIALS[MaterialType.PLA_PETG].pricePerKg,
+      materialType: MaterialType.PLA,
+      materialPrice: DEFAULT_MATERIALS[MaterialType.PLA].pricePerKg,
       complexity: ComplexityLevel.NORMAL
     }
   ]);
@@ -67,8 +68,8 @@ const App: React.FC = () => {
         name: `Деталь ${prev.length + 1}`,
         weight: 0,
         hours: 0,
-        materialType: MaterialType.PLA_PETG,
-        materialPrice: DEFAULT_MATERIALS[MaterialType.PLA_PETG].pricePerKg,
+        materialType: MaterialType.PLA,
+        materialPrice: settings.materialPrices[MaterialType.PLA],
         complexity: ComplexityLevel.NORMAL
       }
     ]);
@@ -92,7 +93,7 @@ const App: React.FC = () => {
 
       // Update price if material type changes
       if (field === 'materialType') {
-        updates.materialPrice = DEFAULT_MATERIALS[value as MaterialType].pricePerKg;
+        updates.materialPrice = settings.materialPrices[value as MaterialType];
       }
 
       return { ...p, ...updates };
