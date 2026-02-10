@@ -305,9 +305,8 @@ ${partsDetails}
 
       const summaryData = [
         ['Материалы', `${Math.round(results.materialCost).toLocaleString()} ₸`],
-        ['Работа оборудования', `${Math.round(results.workCost + results.electricityCost).toLocaleString()} ₸`],
+        ['Производственные расходы', `${Math.round(results.workCost + results.electricityCost + results.markup + results.complexityBonus).toLocaleString()} ₸`],
         ['Доп. услуги', `${Math.round(results.laborCost).toLocaleString()} ₸`],
-        ['Сложность и Маржа', `${Math.round(results.markup + results.complexityBonus).toLocaleString()} ₸`],
         ['ИТОГО К ОПЛАТЕ', `${Math.round(results.total).toLocaleString()} ₸`]
       ];
 
@@ -321,7 +320,7 @@ ${partsDetails}
           1: { halign: 'right' }
         },
         didParseCell: (data) => {
-          if (data.row.index === 4) {
+          if (data.row.index === 3) {
             data.cell.styles.fontStyle = 'bold';
             data.cell.styles.textColor = [37, 99, 235];
             data.cell.styles.fontSize = 14;
