@@ -27,6 +27,7 @@ import {
 } from 'recharts';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { loadCyrillicFonts } from './utils/pdfFonts';
 
 import {
   MaterialType,
@@ -56,6 +57,7 @@ const App: React.FC = () => {
   const [settings, setSettings] = useState<CalcSettings>(DEFAULT_SETTINGS);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const addPart = () => {
     setParts(prev => [
@@ -186,82 +188,96 @@ ${partsDetails}
     }
   };
 
-  const handleGeneratePDF = () => {
-    const doc = new jsPDF();
+  const handleGeneratePDF = async () => {
+    setPdfLoading(true);
+    try {
+      const doc = new jsPDF();
 
-    // Header
-    doc.setFontSize(22);
-    doc.setTextColor(37, 99, 235); // Blue
-    doc.text("3D Calc Pro", 14, 20);
+      // Load Cyrillic-compatible font
+      await loadCyrillicFonts(doc);
 
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text("Коммерческое предложение", 14, 26);
+      // Header
+      doc.setFontSize(22);
+      doc.setTextColor(37, 99, 235); // Blue
+      doc.text("3D Calc Pro", 14, 20);
 
-    doc.setDrawColor(200);
-    doc.line(14, 30, 196, 30);
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text("Коммерческое предложение", 14, 26);
 
-    // Date
-    doc.setFontSize(12);
-    doc.setTextColor(0);
-    doc.text(`Дата: ${new Date().toLocaleDateString()}`, 14, 40);
+      doc.setDrawColor(200);
+      doc.line(14, 30, 196, 30);
 
-    // Parts Table
-    const tableBody = parts.map(part => [
-      part.name,
-      `${part.weight}г`,
-      `${part.hours}ч`,
-      DEFAULT_MATERIALS[part.materialType].name,
-      COMPLEXITY_MULTIPLIERS[part.complexity].name
-    ]);
+      // Date
+      doc.setFontSize(12);
+      doc.setTextColor(0);
+      doc.text(`Дата: ${new Date().toLocaleDateString()}`, 14, 40);
 
-    autoTable(doc, {
-      startY: 50,
-      head: [['Название', 'Вес', 'Время', 'Материал', 'Сложность']],
-      body: tableBody,
-      theme: 'grid',
-      headStyles: { fillColor: [37, 99, 235] }
-    });
+      // Parts Table
+      const tableBody = parts.map(part => [
+        part.name,
+        `${part.weight}г`,
+        `${part.hours}ч`,
+        DEFAULT_MATERIALS[part.materialType].name,
+        COMPLEXITY_MULTIPLIERS[part.complexity].name
+      ]);
 
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
+      const fontStyle = doc.getFontList()['Roboto'] ? { font: 'Roboto' } : {};
 
-    // Financial Summary
-    doc.setFontSize(14);
-    doc.text("Итоговый расчет", 14, finalY);
+      autoTable(doc, {
+        startY: 50,
+        head: [['Название', 'Вес', 'Время', 'Материал', 'Сложность']],
+        body: tableBody,
+        theme: 'grid',
+        headStyles: { fillColor: [37, 99, 235], ...fontStyle },
+        styles: { ...fontStyle }
+      });
 
-    const summaryData = [
-      ['Материалы', `${Math.round(results.materialCost).toLocaleString()} ₸`],
-      ['Работа оборудования', `${Math.round(results.workCost + results.electricityCost).toLocaleString()} ₸`],
-      ['Доп. услуги', `${Math.round(results.laborCost).toLocaleString()} ₸`],
-      ['Сложность и Маржа', `${Math.round(results.markup + results.complexityBonus).toLocaleString()} ₸`],
-      ['ИТОГО К ОПЛАТЕ', `${Math.round(results.total).toLocaleString()} ₸`]
-    ];
+      const finalY = (doc as any).lastAutoTable.finalY + 10;
 
-    autoTable(doc, {
-      startY: finalY + 5,
-      body: summaryData,
-      theme: 'plain',
-      styles: { fontSize: 12, cellPadding: 2 },
-      columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 120 },
-        1: { halign: 'right' }
-      },
-      didParseCell: (data) => {
-        if (data.row.index === 4) {
-          data.cell.styles.fontStyle = 'bold';
-          data.cell.styles.textColor = [37, 99, 235];
-          data.cell.styles.fontSize = 14;
+      // Financial Summary
+      doc.setFontSize(14);
+      doc.text("Итоговый расчет", 14, finalY);
+
+      const summaryData = [
+        ['Материалы', `${Math.round(results.materialCost).toLocaleString()} ₸`],
+        ['Работа оборудования', `${Math.round(results.workCost + results.electricityCost).toLocaleString()} ₸`],
+        ['Доп. услуги', `${Math.round(results.laborCost).toLocaleString()} ₸`],
+        ['Сложность и Маржа', `${Math.round(results.markup + results.complexityBonus).toLocaleString()} ₸`],
+        ['ИТОГО К ОПЛАТЕ', `${Math.round(results.total).toLocaleString()} ₸`]
+      ];
+
+      autoTable(doc, {
+        startY: finalY + 5,
+        body: summaryData,
+        theme: 'plain',
+        styles: { fontSize: 12, cellPadding: 2, ...fontStyle },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 120 },
+          1: { halign: 'right' }
+        },
+        didParseCell: (data) => {
+          if (data.row.index === 4) {
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.textColor = [37, 99, 235];
+            data.cell.styles.fontSize = 14;
+          }
         }
-      }
-    });
+      });
 
-    // Footer
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text("Сгенерировано в 3D Calc Pro", 14, 280);
-    doc.text("https://ziyadabek.github.io/3d-calc-pro/", 14, 285);
+      // Footer
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text("Сгенерировано в 3D Calc Pro", 14, 280);
+      doc.text("https://ziyadabek.github.io/3d-calc-pro/", 14, 285);
 
-    doc.save("3d-calc-offer.pdf");
+      doc.save("3d-calc-offer.pdf");
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      alert('Ошибка при генерации PDF. Попробуйте еще раз.');
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   const handlePrint = () => {
@@ -458,8 +474,8 @@ ${partsDetails}
             <button
               onClick={handleCopyReport}
               className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-base transition-all shadow-md active:scale-95 ${copied
-                  ? 'bg-emerald-600 text-white shadow-emerald-200'
-                  : 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50 shadow-slate-200'
+                ? 'bg-emerald-600 text-white shadow-emerald-200'
+                : 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50 shadow-slate-200'
                 }`}
             >
               {copied ? <CheckCircle2 size={18} /> : <Share2 size={18} />}
@@ -467,10 +483,14 @@ ${partsDetails}
             </button>
             <button
               onClick={handleGeneratePDF}
-              className="flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 text-white rounded-xl font-bold text-base hover:bg-blue-700 transition-all shadow-md shadow-blue-200 active:scale-95"
+              disabled={pdfLoading}
+              className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-base transition-all shadow-md active:scale-95 ${pdfLoading
+                  ? 'bg-blue-400 text-white/80 cursor-wait shadow-blue-100'
+                  : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'
+                }`}
             >
-              <FileDown size={18} />
-              КП (PDF)
+              <FileDown size={18} className={pdfLoading ? 'animate-spin' : ''} />
+              {pdfLoading ? 'Загрузка...' : 'КП (PDF)'}
             </button>
           </div>
         </section>
