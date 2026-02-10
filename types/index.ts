@@ -28,10 +28,6 @@ export interface PrintPart {
   complexity: ComplexityLevel;
 }
 
-export interface CalcInputs {
-  parts: PrintPart[];
-  labor: number; // Global labor cost
-}
 
 export interface CalcSettings {
   amortizationPerHour: number;

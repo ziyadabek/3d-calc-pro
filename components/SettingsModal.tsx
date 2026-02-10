@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { X, Check, Settings, Clock, Cpu, TrendingUp } from 'lucide-react';
-import { CalcSettings } from '../types';
+import { X, Check, Settings } from 'lucide-react';
+import { CalcSettings } from '../types/index';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -28,20 +28,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
         <div className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-black text-slate-500 uppercase">Амортизация (₸/час)</label>
-            <input 
-              type="number" 
+            <input
+              type="number"
               value={settings.amortizationPerHour}
-              onChange={(e) => setSettings({...settings, amortizationPerHour: parseFloat(e.target.value) || 0})}
+              onChange={(e) => setSettings({ ...settings, amortizationPerHour: parseFloat(e.target.value) || 0 })}
               className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg"
             />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-black text-slate-500 uppercase">Электроэнергия (₸/час)</label>
-            <input 
-              type="number" 
+            <input
+              type="number"
               value={settings.electricityPerHour}
-              onChange={(e) => setSettings({...settings, electricityPerHour: parseFloat(e.target.value) || 0})}
+              onChange={(e) => setSettings({ ...settings, electricityPerHour: parseFloat(e.target.value) || 0 })}
               className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg"
             />
           </div>
@@ -49,17 +49,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
           <div className="space-y-2">
             <label className="text-sm font-black text-slate-500 uppercase">Наценка (%)</label>
             <div className="relative">
-              <input 
-                type="number" 
+              <input
+                type="number"
                 value={settings.markupPercent}
-                onChange={(e) => setSettings({...settings, markupPercent: parseFloat(e.target.value) || 0})}
+                onChange={(e) => setSettings({ ...settings, markupPercent: parseFloat(e.target.value) || 0 })}
                 className="w-full px-5 py-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg text-blue-900"
               />
               <span className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-blue-400 text-xl">%</span>
             </div>
           </div>
 
-          <button 
+          <button
             onClick={onClose}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-lg shadow-blue-200 transition-all mt-4"
           >

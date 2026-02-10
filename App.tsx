@@ -35,8 +35,8 @@ import {
   PrintPart,
   CalcSettings,
   CalcResults
-} from './types';
-import { DEFAULT_MATERIALS, DEFAULT_SETTINGS, COMPLEXITY_MULTIPLIERS } from './constants';
+} from './types/index';
+import { DEFAULT_MATERIALS, DEFAULT_SETTINGS, COMPLEXITY_MULTIPLIERS } from './constants/index';
 import { ResultItem } from './components/ResultItem';
 import { SettingsModal } from './components/SettingsModal';
 
@@ -80,7 +80,11 @@ const App: React.FC = () => {
     }
   };
 
-  const updatePart = (id: string, field: keyof PrintPart, value: any) => {
+  const updatePart = <K extends keyof PrintPart>(
+    id: string,
+    field: K,
+    value: PrintPart[K]
+  ) => {
     setParts(prev => prev.map(p => {
       if (p.id !== id) return p;
 
@@ -233,7 +237,7 @@ ${partsDetails}
         styles: { ...fontStyle }
       });
 
-      const finalY = (doc as any).lastAutoTable.finalY + 10;
+      const finalY = (doc as typeof doc & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
 
       // Financial Summary
       doc.setFontSize(14);
