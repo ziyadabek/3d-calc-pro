@@ -32,6 +32,12 @@ export const PriceTotal: React.FC<PriceTotalProps> = ({ results }) => {
                             <span className="text-indigo-300 font-bold text-sm">+{Math.round(results.complexityBonus).toLocaleString()} ₸</span>
                         </div>
                     )}
+                    {results.minOrderSurcharge > 0 && (
+                        <div className="px-3 py-1.5 bg-red-500/20 rounded-lg border border-red-500/20 flex items-center gap-2 backdrop-blur-md">
+                            <span className="text-[10px] font-black uppercase opacity-60">До мин. заказа:</span>
+                            <span className="text-red-300 font-bold text-sm">+{Math.round(results.minOrderSurcharge).toLocaleString()} ₸</span>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-blue-600/20 rounded-full blur-[60px] print:hidden"></div>

@@ -36,7 +36,7 @@ export async function generatePDF(
         const matCost = (part.weight / 1000) * part.materialPrice;
         const work = part.hours * settings.amortizationPerHour;
         const elec = part.hours * settings.electricityPerHour;
-        const partBase = matCost + work + elec;
+        const partBase = (matCost + work + elec) * settings.wasteFactor;
         const materialMarkup = settings.materialMarkups?.[part.materialType] || settings.markupPercent;
         const partMarkup = partBase * (materialMarkup / 100);
         const factor = COMPLEXITY_MULTIPLIERS[part.complexity].factor;
@@ -71,9 +71,14 @@ export async function generatePDF(
     const summaryData = [
         ['Материалы', `${Math.round(results.materialCost).toLocaleString()} ₸`],
         ['Производственные расходы', `${Math.round(results.workCost + results.electricityCost + results.markup + results.complexityBonus).toLocaleString()} ₸`],
-        ['Доп. услуги', `${Math.round(results.laborCost).toLocaleString()} ₸`],
-        ['ИТОГО К ОПЛАТЕ', `${Math.round(results.total).toLocaleString()} ₸`]
+        ['Доп. услуги', `${Math.round(results.laborCost).toLocaleString()} ₸`]
     ];
+
+    if (results.minOrderSurcharge > 0) {
+        summaryData.push(['Доплата до мин. заказа', `${Math.round(results.minOrderSurcharge).toLocaleString()} ₸`]);
+    }
+
+    summaryData.push(['ИТОГО К ОПЛАТЕ', `${Math.round(results.total).toLocaleString()} ₸`]);
 
     autoTable(doc, {
         startY: finalY + 5,
@@ -85,7 +90,7 @@ export async function generatePDF(
             1: { halign: 'right' }
         },
         didParseCell: (data) => {
-            if (data.row.index === 3) {
+            if (data.row.index === summaryData.length - 1) {
                 data.cell.styles.fontStyle = 'bold';
                 data.cell.styles.textColor = [37, 99, 235];
                 data.cell.styles.fontSize = 14;

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useMemo } from 'react';
-import { ShieldAlert, Layers, Clock, Cpu, Wallet, TrendingUp } from 'lucide-react';
+import { ShieldAlert, Layers, Clock, Cpu, Wallet, TrendingUp, AlertCircle } from 'lucide-react';
 import {
     PieChart,
     Pie,
@@ -26,6 +26,7 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({ results }) => {
             { name: 'Труд', value: results.laborCost },
             { name: 'Прибыль', value: results.markup },
             { name: 'Сложность', value: results.complexityBonus },
+            { name: 'Мин. заказ', value: results.minOrderSurcharge || 0 },
         ].filter(d => d.value > 0);
 
         if (data.length === 0) {
@@ -72,6 +73,9 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({ results }) => {
                 <ResultItem icon={<Cpu size={20} />} label="Энергия" value={results.electricityCost} color="text-emerald-600" />
                 <ResultItem icon={<Wallet size={20} />} label="Работа" value={results.laborCost} color="text-amber-600" />
                 <ResultItem icon={<TrendingUp size={20} />} label="Наценка" value={results.markup + results.complexityBonus} color="text-indigo-600" />
+                {results.minOrderSurcharge > 0 && (
+                    <ResultItem icon={<AlertCircle size={20} />} label="До мин. заказа" value={results.minOrderSurcharge} color="text-red-500" />
+                )}
             </div>
 
             <div className="mt-6 pt-6 border-t border-slate-100">

@@ -10,13 +10,17 @@ export function generateTextReport(parts: PrintPart[], labor: number, results: C
    ⚙️ Сложность: ${COMPLEXITY_MULTIPLIERS[p.complexity].name}
 `).join('\n');
 
+    const surchargeText = results.minOrderSurcharge > 0
+        ? `\n⚠️ Доплата до мин. заказа: ${Math.round(results.minOrderSurcharge).toLocaleString()} ₸\n------------------------------`
+        : '';
+
     return `
 📊 ОТЧЕТ 3D ПЕЧАТИ (3D Calc Pro)
 ------------------------------
 ${partsDetails}
 ------------------------------
 🛠 Доп. услуги: ${labor.toLocaleString()} ₸
-------------------------------
+------------------------------${surchargeText}
 💰 ИТОГО: ${Math.round(results.total).toLocaleString()} ₸
 ------------------------------
 📍 Усть-Каменогорск

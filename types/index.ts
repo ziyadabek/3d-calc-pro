@@ -70,5 +70,6 @@ export interface CalcResults {
   subtotal: number;
   markup: number;
   complexityBonus: number;
+  minOrderSurcharge: number;
   total: number;
 }
