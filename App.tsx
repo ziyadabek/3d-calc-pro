@@ -51,44 +51,57 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8 flex flex-col items-center bg-slate-50 print:bg-white print:p-0">
+    <div className="min-h-screen p-4 md:p-6 lg:p-10 flex flex-col items-center relative overflow-hidden print:bg-white print:p-0">
+      {/* Ambient background glows */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+      <div className="absolute top-1/2 right-1/4 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+
       <Header onSettingsClick={() => setIsSettingsOpen(true)} />
 
-      <main className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <section className="lg:col-span-7 space-y-6 print:col-span-12">
-          {parts.map((part) => (
-            <PartCard
-              key={part.id}
-              part={part}
-              canDelete={parts.length > 1}
-              settings={settings}
-              onUpdate={(field, value) => updatePart(part.id, field, value)}
-              onDelete={() => removePart(part.id)}
-            />
-          ))}
+      <main className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
 
-          <button
-            onClick={addPart}
-            className="w-full py-4 bg-white border-2 border-dashed border-slate-300 text-slate-500 rounded-3xl font-bold flex items-center justify-center gap-2 hover:border-blue-500 hover:text-blue-500 transition-all active:scale-[0.99] print:hidden"
-          >
-            <Plus size={24} />
-            Добавить деталь
-          </button>
+        {/* Left Area - Parts & Settings */}
+        <section className="lg:col-span-8 space-y-6 print:col-span-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {parts.map((part) => (
+              <PartCard
+                key={part.id}
+                part={part}
+                canDelete={parts.length > 1}
+                settings={settings}
+                onUpdate={(field, value) => updatePart(part.id, field, value)}
+                onDelete={() => removePart(part.id)}
+              />
+            ))}
 
-          <AdditionalServices labor={labor} onLaborChange={setLabor} />
+            <button
+              onClick={addPart}
+              className="glass-panel border-dashed border-slate-700 text-slate-400 rounded-3xl font-medium flex flex-col items-center justify-center gap-3 hover:border-indigo-500 hover:text-indigo-400 transition-all active:scale-[0.98] print:hidden min-h-[280px]"
+            >
+              <div className="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
+                <Plus size={32} />
+              </div>
+              <span className="text-lg">Добавить деталь</span>
+            </button>
+          </div>
 
-          <PriceTotal results={results} />
-
-          <ActionButtons
-            copied={copied}
-            pdfLoading={pdfLoading}
-            onCopyReport={handleCopyReport}
-            onGeneratePDF={handleGeneratePDF}
-          />
+          <div className="mt-8">
+            <AdditionalServices labor={labor} onLaborChange={setLabor} />
+          </div>
         </section>
 
-        <section className="lg:col-span-5 space-y-6 print:col-span-12">
-          <DetailsSidebar results={results} />
+        {/* Right Area - Sidebar Sticky Total */}
+        <section className="lg:col-span-4 print:col-span-12 relative">
+          <div className="sticky top-10 space-y-6">
+            <PriceTotal results={results} />
+            <DetailsSidebar results={results} />
+            <ActionButtons
+              copied={copied}
+              pdfLoading={pdfLoading}
+              onCopyReport={handleCopyReport}
+              onGeneratePDF={handleGeneratePDF}
+            />
+          </div>
         </section>
       </main>
 
@@ -99,8 +112,8 @@ const App: React.FC = () => {
         setSettings={setSettings}
       />
 
-      <footer className="mt-12 pb-8 text-slate-400 text-[10px] font-black text-center uppercase tracking-widest print:mt-4 print:text-black">
-        <p>© 2026 3D CALC PRO — Усть-Каменогорск</p>
+      <footer className="mt-16 pb-8 text-slate-500/50 text-[10px] font-bold text-center uppercase tracking-widest print:mt-4 print:text-black">
+        <p>© 2026 3D CALC PRO — PREMIERE EDITION</p>
       </footer>
     </div>
   );

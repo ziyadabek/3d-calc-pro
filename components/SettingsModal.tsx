@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, Check, Settings, ChevronDown, ChevronUp, Coins, TrendingUp } from 'lucide-react';
 import { CalcSettings, MaterialType } from '../types/index';
@@ -12,18 +11,18 @@ interface SettingsModalProps {
 }
 
 const MATERIAL_COLORS: Record<string, { bg: string; border: string; text: string; icon: string }> = {
-  PLA: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-900', icon: 'text-blue-500' },
-  PETG: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-900', icon: 'text-emerald-500' },
-  ABS: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-900', icon: 'text-amber-500' },
-  ASA: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-900', icon: 'text-orange-500' },
-  PA_CF: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-900', icon: 'text-red-500' },
-  TPU: { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-900', icon: 'text-purple-500' },
-  CUSTOM: { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-900', icon: 'text-slate-500' }
+  PLA: { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-200', icon: 'text-blue-400' },
+  PETG: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-200', icon: 'text-emerald-400' },
+  ABS: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-200', icon: 'text-amber-400' },
+  ASA: { bg: 'bg-orange-500/10', border: 'border-orange-500/30', text: 'text-orange-200', icon: 'text-orange-400' },
+  PA_CF: { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-200', icon: 'text-red-400' },
+  TPU: { bg: 'bg-purple-500/10', border: 'border-purple-500/30', text: 'text-purple-200', icon: 'text-purple-400' },
+  CUSTOM: { bg: 'bg-slate-500/10', border: 'border-slate-500/30', text: 'text-slate-200', icon: 'text-slate-400' }
 };
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings, setSettings }) => {
-  const [showPrices, setShowPrices] = useState(true);
-  const [showMarkups, setShowMarkups] = useState(true);
+  const [showPrices, setShowPrices] = useState(false);
+  const [showMarkups, setShowMarkups] = useState(false);
 
   if (!isOpen) return null;
 
@@ -48,100 +47,105 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm transition-all">
-      <div className="bg-white rounded-[2rem] p-8 max-w-lg w-full shadow-2xl border border-white/20 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md transition-all">
+      <div className="glass-panel bg-slate-900/90 rounded-[2rem] p-6 md:p-8 max-w-lg w-full shadow-[0_0_50px_rgba(99,102,241,0.15)] border border-indigo-500/20 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-8">
-          <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-            <Settings className="text-blue-600" /> Константы цен
+          <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
+            <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400">
+              <Settings size={22} />
+            </div>
+            Константы цен
           </h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400">
-            <X size={28} />
+          <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full text-slate-400 transition-colors">
+            <X size={24} />
           </button>
         </div>
 
         <div className="space-y-6">
           {/* General settings */}
-          <div className="space-y-2">
-            <label className="text-sm font-black text-slate-500 uppercase">Амортизация (₸/час)</label>
+          <div className="relative group/input">
+            <label className="absolute -top-2.5 left-4 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-900 z-10">Амортизация (₸/час)</label>
             <input
               type="number"
               value={settings.amortizationPerHour}
               onChange={(e) => setSettings({ ...settings, amortizationPerHour: parseFloat(e.target.value) || 0 })}
-              className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg"
+              className="glass-input w-full px-5 py-4 rounded-2xl font-bold text-lg text-white"
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-black text-slate-500 uppercase">Электроэнергия (₸/час)</label>
+          <div className="relative group/input">
+            <label className="absolute -top-2.5 left-4 px-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-900 z-10">Электроэнергия (₸/час)</label>
             <input
               type="number"
               value={settings.electricityPerHour}
               onChange={(e) => setSettings({ ...settings, electricityPerHour: parseFloat(e.target.value) || 0 })}
-              className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg"
+              className="glass-input w-full px-5 py-4 rounded-2xl font-bold text-lg text-white"
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-black text-slate-500 uppercase">Наценка на труд (%)</label>
+          <div className="relative group/input">
+            <label className="absolute -top-2.5 left-4 px-1 text-[10px] font-bold text-indigo-400 uppercase tracking-wider bg-slate-900 z-10">Наценка на труд (%)</label>
             <div className="relative">
               <input
                 type="number"
                 value={settings.markupPercent}
                 onChange={(e) => setSettings({ ...settings, markupPercent: parseFloat(e.target.value) || 0 })}
-                className="w-full px-5 py-4 bg-blue-50 border-2 border-blue-100 rounded-2xl focus:border-blue-500 outline-none font-bold text-lg text-blue-900"
+                className="glass-input bg-indigo-500/5 focus:ring-indigo-500/30 focus:border-indigo-500/50 w-full pl-5 pr-12 py-4 rounded-2xl font-bold text-lg text-indigo-200"
               />
-              <span className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-blue-400 text-xl">%</span>
+              <span className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-indigo-500 text-xl">%</span>
             </div>
-            <p className="text-xs text-slate-400 ml-1">Только для доп. услуг (постобработка, сборка)</p>
+            <p className="text-[10px] text-slate-500 ml-2 mt-2 font-medium">Только для доп. услуг (постобработка, сборка)</p>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-black text-slate-500 uppercase">Коэффициент брака</label>
+          <div className="relative group/input">
+            <label className="absolute -top-2.5 left-4 px-1 text-[10px] font-bold text-amber-400 uppercase tracking-wider bg-slate-900 z-10">Коэффициент брака</label>
             <div className="relative">
               <input
                 type="number"
                 step="0.01"
                 value={settings.wasteFactor}
                 onChange={(e) => setSettings({ ...settings, wasteFactor: parseFloat(e.target.value) || 1.0 })}
-                className="w-full px-5 py-4 bg-amber-50 border-2 border-amber-100 rounded-2xl focus:border-amber-500 outline-none font-bold text-lg text-amber-900"
+                className="glass-input bg-amber-500/5 focus:ring-amber-500/30 focus:border-amber-500/50 w-full pl-5 pr-12 py-4 rounded-2xl font-bold text-lg text-amber-200"
               />
-              <span className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-amber-400 text-xl">×</span>
+              <span className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-amber-500 text-xl">×</span>
             </div>
-            <p className="text-xs text-slate-400 ml-1">1.1 = +10% на брак и непредвиденные расходы</p>
+            <p className="text-[10px] text-slate-500 ml-2 mt-2 font-medium">1.1 = +10% на брак и непредвиденные расходы</p>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-black text-slate-500 uppercase">Минимальная цена заказа (₸)</label>
+          <div className="relative group/input">
+            <label className="absolute -top-2.5 left-4 px-1 text-[10px] font-bold text-emerald-400 uppercase tracking-wider bg-slate-900 z-10">Минимальная цена заказа (₸)</label>
             <input
               type="number"
               value={settings.minOrderPrice}
               onChange={(e) => setSettings({ ...settings, minOrderPrice: parseFloat(e.target.value) || 0 })}
-              className="w-full px-5 py-4 bg-emerald-50 border-2 border-emerald-100 rounded-2xl focus:border-emerald-500 outline-none font-bold text-lg text-emerald-900"
+              className="glass-input bg-emerald-500/5 focus:ring-emerald-500/30 focus:border-emerald-500/50 w-full px-5 py-4 rounded-2xl font-bold text-lg text-emerald-200"
             />
-            <p className="text-xs text-slate-400 ml-1">Защита от убыточных мелких заказов</p>
+            <p className="text-[10px] text-slate-500 ml-2 mt-2 font-medium">Защита от убыточных мелких заказов</p>
           </div>
 
           {/* Material prices section */}
-          <div className="border-t border-slate-100 pt-6">
+          <div className="border-t border-slate-800 pt-6 mt-4">
             <button
               onClick={() => setShowPrices(!showPrices)}
-              className="w-full flex items-center justify-between text-lg font-black text-slate-800 mb-4 hover:text-blue-600 transition-colors"
+              className="w-full flex items-center justify-between text-base font-bold text-slate-200 mb-4 hover:text-indigo-400 transition-colors"
             >
-              <span className="flex items-center gap-2">
-                <Coins size={22} className="text-blue-600" />
+              <span className="flex items-center gap-3">
+                <div className="p-1.5 bg-slate-800 rounded-lg text-slate-400">
+                  <Coins size={18} />
+                </div>
                 Цены пластиков (₸/кг)
               </span>
-              {showPrices ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              {showPrices ? <ChevronUp size={20} className="text-slate-500" /> : <ChevronDown size={20} className="text-slate-500" />}
             </button>
 
             {showPrices && (
-              <div className="space-y-3 transition-all duration-300">
+              <div className="space-y-4 transition-all duration-300">
                 {Object.entries(DEFAULT_MATERIALS).map(([key, config]) => {
                   const materialType = key as MaterialType;
                   const colors = MATERIAL_COLORS[key] || MATERIAL_COLORS.CUSTOM;
                   return (
                     <div key={key} className="space-y-1">
-                      <label className={`text-xs font-black uppercase tracking-wider ${colors.icon}`}>
+                      <label className={`text-[10px] font-bold uppercase tracking-widest pl-1 ${colors.icon}`}>
                         {config.name}
                       </label>
                       <div className="relative">
@@ -149,9 +153,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                           type="number"
                           value={settings.materialPrices[materialType] || 0}
                           onChange={(e) => updateMaterialPrice(materialType, parseFloat(e.target.value) || 0)}
-                          className={`w-full pl-4 pr-16 py-3 ${colors.bg} border-2 ${colors.border} rounded-xl focus:ring-2 focus:ring-blue-200 outline-none font-bold text-base ${colors.text} transition-all`}
+                          className={`w-full pl-5 pr-16 py-3 bg-slate-950/50 ${colors.bg} border border-slate-800 focus:${colors.border} rounded-xl outline-none font-bold text-base ${colors.text} transition-all`}
                         />
-                        <span className={`absolute right-4 top-1/2 -translate-y-1/2 font-bold text-xs ${colors.icon} opacity-70`}>₸/кг</span>
+                        <span className={`absolute right-5 top-1/2 -translate-y-1/2 font-bold text-[10px] tracking-widest uppercase ${colors.icon} opacity-50`}>₸/кг</span>
                       </div>
                     </div>
                   );
@@ -161,20 +165,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
           </div>
 
           {/* Material markups section */}
-          <div className="border-t border-slate-100 pt-6">
+          <div className="border-t border-slate-800 pt-6">
             <button
               onClick={() => setShowMarkups(!showMarkups)}
-              className="w-full flex items-center justify-between text-lg font-black text-slate-800 mb-4 hover:text-blue-600 transition-colors"
+              className="w-full flex items-center justify-between text-base font-bold text-slate-200 mb-4 hover:text-emerald-400 transition-colors"
             >
-              <span className="flex items-center gap-2">
-                <TrendingUp size={22} className="text-emerald-600" />
+              <span className="flex items-center gap-3">
+                <div className="p-1.5 bg-slate-800 rounded-lg text-slate-400">
+                  <TrendingUp size={18} />
+                </div>
                 Наценки на пластики (%)
               </span>
-              {showMarkups ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              {showMarkups ? <ChevronUp size={20} className="text-slate-500" /> : <ChevronDown size={20} className="text-slate-500" />}
             </button>
 
             {showMarkups && (
-              <div className="space-y-3 transition-all duration-300">
+              <div className="space-y-4 transition-all duration-300">
                 {Object.entries(DEFAULT_MATERIALS).map(([key, config]) => {
                   const materialType = key as MaterialType;
                   const colors = MATERIAL_COLORS[key] || MATERIAL_COLORS.CUSTOM;
@@ -184,9 +190,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
 
                   return (
                     <div key={key} className="space-y-1">
-                      <label className={`text-xs font-black uppercase tracking-wider ${colors.icon} flex justify-between`}>
+                      <label className={`text-[10px] font-bold uppercase tracking-widest pl-1 ${colors.icon} flex justify-between`}>
                         <span>{config.name}</span>
-                        <span className="font-normal text-[10px] opacity-70">
+                        <span className="font-normal opacity-50">
                           → {sellPricePerGram.toFixed(1)} ₸/г
                         </span>
                       </label>
@@ -195,9 +201,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                           type="number"
                           value={settings.materialMarkups?.[materialType] || 0}
                           onChange={(e) => updateMaterialMarkup(materialType, parseFloat(e.target.value) || 0)}
-                          className={`w-full pl-4 pr-12 py-3 ${colors.bg} border-2 ${colors.border} rounded-xl focus:ring-2 focus:ring-emerald-200 outline-none font-bold text-base ${colors.text} transition-all`}
+                          className={`w-full pl-5 pr-12 py-3 bg-slate-950/50 ${colors.bg} border border-slate-800 focus:${colors.border} rounded-xl outline-none font-bold text-base ${colors.text} transition-all`}
                         />
-                        <span className={`absolute right-4 top-1/2 -translate-y-1/2 font-bold text-xs ${colors.icon} opacity-70`}>%</span>
+                        <span className={`absolute right-5 top-1/2 -translate-y-1/2 font-black text-xs ${colors.icon} opacity-60`}>%</span>
                       </div>
                     </div>
                   );
@@ -208,9 +214,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
 
           <button
             onClick={onClose}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-lg shadow-blue-200 transition-all mt-4"
+            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-2xl font-bold text-base tracking-wide flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] transition-all mt-8 active:scale-[0.98]"
           >
-            <Check size={24} /> ПРИМЕНИТЬ
+            <Check size={20} /> ПРИМЕНИТЬ И ЗАКРЫТЬ
           </button>
         </div>
       </div>
