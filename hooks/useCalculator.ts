@@ -42,8 +42,7 @@ export function useCalculator(parts: PrintPart[], labor: number, settings: CalcS
         });
 
         const laborCost = labor;
-        const laborMarkup = labor * (settings.markupPercent / 100);
-        const calculatedTotal = totalBase + totalMarkup + totalComplexity + laborCost + laborMarkup;
+        const calculatedTotal = totalBase + totalMarkup + totalComplexity + laborCost;
 
         // Применяем минимальную цену заказа
         const minOrderSurcharge = Math.max(0, settings.minOrderPrice - calculatedTotal);
@@ -55,7 +54,7 @@ export function useCalculator(parts: PrintPart[], labor: number, settings: CalcS
             electricityCost: totalElec,
             laborCost: laborCost,
             subtotal: totalBase + laborCost,
-            markup: totalMarkup + laborMarkup,
+            markup: totalMarkup,
             complexityBonus: totalComplexity,
             minOrderSurcharge: minOrderSurcharge,
             total: finalTotal
