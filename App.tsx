@@ -95,6 +95,7 @@ const App: React.FC = () => {
               hours={modelingHours}
               iterations={modelingIterations}
               complexity={modelingComplexity}
+              settings={settings}
               onHoursChange={setModelingHours}
               onIterationsChange={setModelingIterations}
               onComplexityChange={setModelingComplexity}
