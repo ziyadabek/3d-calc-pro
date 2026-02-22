@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useMemo } from 'react';
-import { ShieldAlert, Layers, Clock, Cpu, Wallet, TrendingUp, AlertCircle } from 'lucide-react';
+import { ShieldAlert, Layers, Clock, Cpu, Wallet, TrendingUp, AlertCircle, PenTool } from 'lucide-react';
 import {
     PieChart,
     Pie,
@@ -25,6 +25,7 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({ results }) => {
             { name: 'Принтер', value: results.workCost },
             { name: 'Энергия', value: results.electricityCost },
             { name: 'Труд', value: results.laborCost },
+            { name: 'Модель', value: results.modelingCost },
             { name: 'Прибыль', value: results.markup },
             { name: 'Сложность', value: results.complexityBonus },
             { name: 'Мин. заказ', value: results.minOrderSurcharge || 0 },
@@ -93,6 +94,7 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({ results }) => {
                     <ResultItem icon={<Layers size={20} />} label="Материал" value={results.materialCost} color="text-blue-400" />
                     <ResultItem icon={<Clock size={20} />} label="Принтер" value={results.workCost} color="text-purple-400" />
                     <ResultItem icon={<Cpu size={20} />} label="Энергия" value={results.electricityCost} color="text-emerald-400" />
+                    <ResultItem icon={<PenTool size={20} />} label="Модель" value={results.modelingCost} color="text-pink-400" />
                     <ResultItem icon={<Wallet size={20} />} label="Работа" value={results.laborCost} color="text-amber-400" />
                     <ResultItem icon={<TrendingUp size={20} />} label="Наценка" value={results.markup + results.complexityBonus} color="text-indigo-400" />
                     {results.minOrderSurcharge > 0 && (

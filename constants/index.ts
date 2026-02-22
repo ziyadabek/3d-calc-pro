@@ -1,5 +1,5 @@
 
-import { MaterialType, MaterialConfig, CalcSettings, ComplexityLevel, MaterialPrices, MaterialMarkups } from '../types';
+import { MaterialType, MaterialConfig, CalcSettings, ComplexityLevel, ModelingComplexityLevel, MaterialPrices, MaterialMarkups } from '../types';
 
 export const DEFAULT_MATERIAL_PRICES: MaterialPrices = {
   [MaterialType.PLA]: 11000,
@@ -38,6 +38,12 @@ export const COMPLEXITY_MULTIPLIERS: Record<ComplexityLevel, { name: string, fac
   [ComplexityLevel.ULTRA]: { name: 'Ультра (Фигурки)', factor: 1.6 }
 };
 
+export const MODELING_COMPLEXITY_MULTIPLIERS: Record<ModelingComplexityLevel, { name: string, defaultPrice: number, description: string }> = {
+  [ModelingComplexityLevel.SIMPLE]: { name: 'Минимальная (Простые детали)', defaultPrice: 4000, description: 'Базовый реверс по сломанной детали или простых кронштейнов' },
+  [ModelingComplexityLevel.NORMAL]: { name: 'Средняя (Опытный инженер)', defaultPrice: 6500, description: 'Сложная геометрия, механизмы, «додумывание» конструкции' },
+  [ModelingComplexityLevel.PRO]: { name: 'Профессиональная (Срочная)', defaultPrice: 10000, description: 'Сложные сборки, профессиональный реверс, срочная разработка' }
+};
+
 export const DEFAULT_SETTINGS: CalcSettings = {
   amortizationPerHour: 250,
   electricityPerHour: 40,
@@ -45,5 +51,11 @@ export const DEFAULT_SETTINGS: CalcSettings = {
   materialPrices: { ...DEFAULT_MATERIAL_PRICES },
   materialMarkups: { ...DEFAULT_MATERIAL_MARKUPS },
   wasteFactor: 1.1, // +10% на брак и непредвиденные расходы
-  minOrderPrice: 2000 // минимум 2000₸ за заказ
+  minOrderPrice: 2000, // минимум 2000₸ за заказ
+  modelingPrices: {
+    [ModelingComplexityLevel.SIMPLE]: 4000,
+    [ModelingComplexityLevel.NORMAL]: 6500,
+    [ModelingComplexityLevel.PRO]: 10000
+  },
+  modelingPerIteration: 1000 // стоимость одной итерации по умолчанию
 };

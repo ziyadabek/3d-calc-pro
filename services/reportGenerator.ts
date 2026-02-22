@@ -20,7 +20,7 @@ export function generateTextReport(parts: PrintPart[], labor: number, results: C
 ${partsDetails}
 ------------------------------
 🛠 Доп. услуги: ${labor.toLocaleString()} ₸
-------------------------------${surchargeText}
+${results.modelingCost > 0 ? `------------------------------\n🎨 Моделирование: ${Math.round(results.modelingCost).toLocaleString()} ₸\n` : ''}------------------------------${surchargeText}
 💰 ИТОГО: ${Math.round(results.total).toLocaleString()} ₸
 ------------------------------
 📍 Усть-Каменогорск

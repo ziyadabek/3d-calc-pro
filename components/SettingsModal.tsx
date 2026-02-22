@@ -113,6 +113,46 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
           </div>
 
           <div className="relative group/input">
+            <label className="absolute -top-2.5 left-4 px-1 text-[10px] font-bold text-indigo-400 uppercase tracking-wider bg-slate-900 z-10">Моделирование: Простые детали (₸/ч)</label>
+            <input
+              type="number"
+              value={settings.modelingPrices?.SIMPLE || 0}
+              onChange={(e) => setSettings({ ...settings, modelingPrices: { ...settings.modelingPrices, SIMPLE: parseFloat(e.target.value) || 0 } })}
+              className="glass-input w-full px-5 py-4 rounded-2xl font-bold text-lg text-indigo-200 bg-indigo-500/5 focus:ring-indigo-500/30 focus:border-indigo-500/50"
+            />
+          </div>
+
+          <div className="relative group/input">
+            <label className="absolute -top-2.5 left-4 px-1 text-[10px] font-bold text-indigo-400 uppercase tracking-wider bg-slate-900 z-10">Моделирование: Опытный инженер (₸/ч)</label>
+            <input
+              type="number"
+              value={settings.modelingPrices?.NORMAL || 0}
+              onChange={(e) => setSettings({ ...settings, modelingPrices: { ...settings.modelingPrices, NORMAL: parseFloat(e.target.value) || 0 } })}
+              className="glass-input w-full px-5 py-4 rounded-2xl font-bold text-lg text-indigo-200 bg-indigo-500/5 focus:ring-indigo-500/30 focus:border-indigo-500/50"
+            />
+          </div>
+
+          <div className="relative group/input">
+            <label className="absolute -top-2.5 left-4 px-1 text-[10px] font-bold text-indigo-400 uppercase tracking-wider bg-slate-900 z-10">Моделирование: Срочная/Про (₸/ч)</label>
+            <input
+              type="number"
+              value={settings.modelingPrices?.PRO || 0}
+              onChange={(e) => setSettings({ ...settings, modelingPrices: { ...settings.modelingPrices, PRO: parseFloat(e.target.value) || 0 } })}
+              className="glass-input w-full px-5 py-4 rounded-2xl font-bold text-lg text-indigo-200 bg-indigo-500/5 focus:ring-indigo-500/30 focus:border-indigo-500/50"
+            />
+          </div>
+
+          <div className="relative group/input">
+            <label className="absolute -top-2.5 left-4 px-1 text-[10px] font-bold text-indigo-400 uppercase tracking-wider bg-slate-900 z-10">Итерация моделирования (₸)</label>
+            <input
+              type="number"
+              value={settings.modelingPerIteration || 0}
+              onChange={(e) => setSettings({ ...settings, modelingPerIteration: parseFloat(e.target.value) || 0 })}
+              className="glass-input w-full px-5 py-4 rounded-2xl font-bold text-lg text-indigo-200 bg-indigo-500/5 focus:ring-indigo-500/30 focus:border-indigo-500/50"
+            />
+          </div>
+
+          <div className="relative group/input">
             <label className="absolute -top-2.5 left-4 px-1 text-[10px] font-bold text-emerald-400 uppercase tracking-wider bg-slate-900 z-10">Минимальная цена заказа (₸)</label>
             <input
               type="number"

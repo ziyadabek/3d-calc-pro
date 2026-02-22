@@ -1,8 +1,15 @@
 import { useMemo } from 'react';
-import { PrintPart, CalcSettings, CalcResults } from '../types/index';
+import { PrintPart, CalcSettings, CalcResults, ModelingComplexityLevel } from '../types/index';
 import { COMPLEXITY_MULTIPLIERS } from '../constants/index';
 
-export function useCalculator(parts: PrintPart[], labor: number, settings: CalcSettings): CalcResults {
+export function useCalculator(
+    parts: PrintPart[],
+    labor: number,
+    settings: CalcSettings,
+    modelingHours: number = 0,
+    modelingIterations: number = 0,
+    modelingComplexity: ModelingComplexityLevel = ModelingComplexityLevel.NORMAL
+): CalcResults {
     return useMemo(() => {
         let totalMaterial = 0;
         let totalWork = 0;
@@ -42,7 +49,9 @@ export function useCalculator(parts: PrintPart[], labor: number, settings: CalcS
         });
 
         const laborCost = labor;
-        const calculatedTotal = totalBase + totalMarkup + totalComplexity + laborCost;
+        const currentModelingPricePerHour = settings.modelingPrices?.[modelingComplexity] || 0;
+        const modelingCost = (modelingHours * currentModelingPricePerHour) + (modelingIterations * (settings.modelingPerIteration || 0));
+        const calculatedTotal = totalBase + totalMarkup + totalComplexity + laborCost + modelingCost;
 
         // Применяем минимальную цену заказа
         const minOrderSurcharge = Math.max(0, settings.minOrderPrice - calculatedTotal);
@@ -53,11 +62,12 @@ export function useCalculator(parts: PrintPart[], labor: number, settings: CalcS
             workCost: totalWork,
             electricityCost: totalElec,
             laborCost: laborCost,
-            subtotal: totalBase + laborCost,
+            subtotal: totalBase + laborCost + modelingCost,
             markup: totalMarkup,
             complexityBonus: totalComplexity,
             minOrderSurcharge: minOrderSurcharge,
+            modelingCost: modelingCost,
             total: finalTotal
         };
-    }, [parts, labor, settings]);
+    }, [parts, labor, settings, modelingHours, modelingIterations, modelingComplexity]);
 }

@@ -74,6 +74,10 @@ export async function generatePDF(
         ['Доп. услуги', `${Math.round(results.laborCost).toLocaleString()} ₸`]
     ];
 
+    if (results.modelingCost > 0) {
+        summaryData.push(['Моделирование', `${Math.round(results.modelingCost).toLocaleString()} ₸`]);
+    }
+
     if (results.minOrderSurcharge > 0) {
         summaryData.push(['Доплата до мин. заказа', `${Math.round(results.minOrderSurcharge).toLocaleString()} ₸`]);
     }

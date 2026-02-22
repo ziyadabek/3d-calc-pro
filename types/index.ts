@@ -16,6 +16,12 @@ export enum ComplexityLevel {
   ULTRA = 'ULTRA'
 }
 
+export enum ModelingComplexityLevel {
+  SIMPLE = 'SIMPLE',
+  NORMAL = 'NORMAL',
+  PRO = 'PRO'
+}
+
 export interface MaterialConfig {
   name: string;
   pricePerKg: number;
@@ -52,6 +58,12 @@ export interface MaterialMarkups {
   [MaterialType.CUSTOM]: number;
 }
 
+export interface ModelingPrices {
+  [ModelingComplexityLevel.SIMPLE]: number;
+  [ModelingComplexityLevel.NORMAL]: number;
+  [ModelingComplexityLevel.PRO]: number;
+}
+
 export interface CalcSettings {
   amortizationPerHour: number;
   electricityPerHour: number;
@@ -60,6 +72,8 @@ export interface CalcSettings {
   materialMarkups: MaterialMarkups;
   wasteFactor: number; // коэффициент брака (например, 1.1 = +10%)
   minOrderPrice: number; // минимальная цена заказа в ₸
+  modelingPrices: ModelingPrices; // стоимости часа моделирования в ₸ по сложностям
+  modelingPerIteration: number; // стоимость одной итерации/примерки в ₸
 }
 
 export interface CalcResults {
@@ -71,5 +85,6 @@ export interface CalcResults {
   markup: number;
   complexityBonus: number;
   minOrderSurcharge: number;
+  modelingCost: number;
   total: number;
 }

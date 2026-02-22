@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
+import { ModelingComplexityLevel } from './types/index';
 
 // Hooks
 import { useSettings } from './hooks/useSettings';
@@ -15,6 +16,7 @@ import { generatePDF } from './services/pdfGenerator';
 import { Header } from './components/Header';
 import { PartCard } from './components/PartCard';
 import { AdditionalServices } from './components/AdditionalServices';
+import { ModelingCalculator } from './components/ModelingCalculator';
 import { PriceTotal } from './components/PriceTotal';
 import { ActionButtons } from './components/ActionButtons';
 import { DetailsSidebar } from './components/DetailsSidebar';
@@ -24,7 +26,10 @@ const App: React.FC = () => {
   const { settings, setSettings } = useSettings();
   const { parts, addPart, removePart, updatePart } = useParts(settings);
   const [labor, setLabor] = useState(0);
-  const results = useCalculator(parts, labor, settings);
+  const [modelingHours, setModelingHours] = useState(0);
+  const [modelingIterations, setModelingIterations] = useState(0);
+  const [modelingComplexity, setModelingComplexity] = useState<ModelingComplexityLevel>(ModelingComplexityLevel.NORMAL);
+  const results = useCalculator(parts, labor, settings, modelingHours, modelingIterations, modelingComplexity);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -85,7 +90,15 @@ const App: React.FC = () => {
             </button>
           </div>
 
-          <div className="mt-8">
+          <div className="mt-8 space-y-6">
+            <ModelingCalculator
+              hours={modelingHours}
+              iterations={modelingIterations}
+              complexity={modelingComplexity}
+              onHoursChange={setModelingHours}
+              onIterationsChange={setModelingIterations}
+              onComplexityChange={setModelingComplexity}
+            />
             <AdditionalServices labor={labor} onLaborChange={setLabor} />
           </div>
         </section>
