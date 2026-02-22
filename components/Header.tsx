@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Calculator, Settings } from 'lucide-react';
+import { InstallPWA } from './InstallPWA';
 
 interface HeaderProps {
     onSettingsClick: () => void;
@@ -17,12 +18,15 @@ export const Header: React.FC<HeaderProps> = ({ onSettingsClick }) => {
                     <p className="text-indigo-300 text-xs font-bold mt-1.5 uppercase tracking-widest opacity-80">Premium Print Calculator</p>
                 </div>
             </div>
-            <button
-                onClick={onSettingsClick}
-                className="p-3 bg-slate-800/50 border border-slate-700/50 rounded-2xl hover:bg-slate-700 hover:border-indigo-500/50 transition-all text-slate-300 hover:text-white hover:shadow-[0_0_15px_rgba(99,102,241,0.3)] shadow-inner"
-            >
-                <Settings size={24} />
-            </button>
+            <div className="flex items-center gap-3">
+                <InstallPWA />
+                <button
+                    onClick={onSettingsClick}
+                    className="p-3 bg-slate-800/50 border border-slate-700/50 rounded-2xl hover:bg-slate-700 hover:border-indigo-500/50 transition-all text-slate-300 hover:text-white hover:shadow-[0_0_15px_rgba(99,102,241,0.3)] shadow-inner"
+                >
+                    <Settings size={24} />
+                </button>
+            </div>
         </header>
     );
 };
