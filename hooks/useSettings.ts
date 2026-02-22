@@ -14,7 +14,8 @@ function loadSettingsFromStorage(): CalcSettings {
         ...DEFAULT_SETTINGS,
         ...parsed,
         materialPrices: { ...DEFAULT_SETTINGS.materialPrices, ...(parsed.materialPrices || {}) },
-        materialMarkups: { ...DEFAULT_SETTINGS.materialMarkups, ...(parsed.materialMarkups || {}) }
+        materialMarkups: { ...DEFAULT_SETTINGS.materialMarkups, ...(parsed.materialMarkups || {}) },
+        modelingPrices: { ...DEFAULT_SETTINGS.modelingPrices, ...(parsed.modelingPrices || {}) }
       };
     }
   } catch (e) {
