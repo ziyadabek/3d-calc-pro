@@ -56,11 +56,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-10 flex flex-col items-center relative overflow-hidden print:bg-white print:p-0">
-      {/* Ambient background glows */}
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
-      <div className="absolute top-1/2 right-1/4 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
-
+    <div className="min-h-screen p-4 md:p-6 lg:p-10 flex flex-col items-center bg-slate-50 print:bg-white print:p-0">
       <Header onSettingsClick={() => setIsSettingsOpen(true)} />
 
       <main className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
@@ -81,9 +77,9 @@ const App: React.FC = () => {
 
             <button
               onClick={addPart}
-              className="glass-panel border-dashed border-slate-700 text-slate-400 rounded-3xl font-medium flex flex-col items-center justify-center gap-3 hover:border-indigo-500 hover:text-indigo-400 transition-all active:scale-[0.98] print:hidden min-h-[280px]"
+              className="glass-panel border-dashed border-slate-300 text-slate-500 rounded-3xl font-medium flex flex-col items-center justify-center gap-3 hover:border-brand hover:text-brand transition-all active:scale-[0.98] print:hidden min-h-[280px]"
             >
-              <div className="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
+              <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-brand-light transition-colors">
                 <Plus size={32} />
               </div>
               <span className="text-lg">Добавить деталь</span>
@@ -126,8 +122,8 @@ const App: React.FC = () => {
         setSettings={setSettings}
       />
 
-      <footer className="mt-16 pb-8 text-slate-500/50 text-[10px] font-bold text-center uppercase tracking-widest print:mt-4 print:text-black">
-        <p>© 2026 3D CALC PRO — PREMIERE EDITION</p>
+      <footer className="mt-16 pb-8 text-slate-400 text-[10px] font-bold text-center uppercase tracking-widest print:mt-4 print:text-black">
+        <p>© 2026 3D CALC PRO — MINIMAL EDITION</p>
       </footer>
     </div>
   );

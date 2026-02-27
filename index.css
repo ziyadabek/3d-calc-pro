@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,30 +6,31 @@
 
 @layer base {
   body {
-    font-family: 'Outfit', sans-serif;
-    /* Hide scrollbar for cleaner look */
+    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc; /* slate-50 */
+    color: #1e293b; /* slate-800 */
+    
     ::-webkit-scrollbar {
       width: 8px;
     }
     ::-webkit-scrollbar-track {
-      background: transparent;
+      background: #f1f5f9; /* slate-100 */
     }
     ::-webkit-scrollbar-thumb {
-      @apply bg-slate-800 rounded-full;
+      @apply bg-slate-300 rounded-full;
     }
     ::-webkit-scrollbar-thumb:hover {
-      @apply bg-slate-700;
+      @apply bg-slate-400;
     }
   }
 }
 
-/* Base custom animations and utilities for glassmorphism */
 @layer utilities {
   .glass-panel {
-    @apply bg-slate-900/60 backdrop-blur-xl border border-slate-800 shadow-2xl;
+    @apply bg-white border border-slate-200 shadow-sm transition-shadow hover:shadow-md;
   }
   
   .glass-input {
-    @apply bg-slate-950/50 border border-slate-800 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 text-slate-200 shadow-inner backdrop-blur-sm transition-all outline-none;
+    @apply bg-slate-50 border border-slate-200 focus:border-brand focus:ring-1 focus:ring-brand text-slate-800 outline-none transition-colors;
   }
 }

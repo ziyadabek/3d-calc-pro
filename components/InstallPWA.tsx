@@ -30,11 +30,11 @@ export const InstallPWA: React.FC = () => {
     return (
         <button
             onClick={handleInstallClick}
-            className="p-3 bg-gradient-to-r from-indigo-600 to-blue-600 border border-indigo-400 rounded-2xl hover:shadow-[0_0_20px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all text-white flex items-center gap-2 font-bold transform"
+            className="p-3 bg-brand text-white rounded-2xl hover:bg-brand-dark transition-all flex items-center gap-2 font-bold shadow-sm"
             title="Установить приложение"
         >
             <Download size={20} />
-            <span className="hidden sm:inline">Установить</span>
+            <span className="hidden sm:inline">Приложение</span>
         </button>
     );
 };
