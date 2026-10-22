@@ -67,7 +67,14 @@ function loadOrderMeta(): OrderMeta {
 }
 
 function loadAdminHashes(): { loginHash: string; passwordHash: string } {
+  const codeSig = JSON.stringify(ADMIN_CONFIG);
   try {
+    const savedSig = localStorage.getItem('3dcalcpro_admin_code_sig');
+    if (savedSig !== codeSig) {
+      localStorage.setItem('3dcalcpro_admin_code_sig', codeSig);
+      localStorage.setItem(ADMIN_HASHES_KEY, codeSig);
+      return { loginHash: ADMIN_CONFIG.loginHash, passwordHash: ADMIN_CONFIG.passwordHash };
+    }
     const raw = localStorage.getItem(ADMIN_HASHES_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);

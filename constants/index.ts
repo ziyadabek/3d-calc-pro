@@ -20,7 +20,7 @@ export const ADMIN_CONFIG = {
 
 export const DEFAULT_MATERIAL_PRICES: MaterialPrices = {
   [MaterialType.PLA]: 11000,
-  [MaterialType.PETG]: 8500, // 17000₸ за 2кг
+  [MaterialType.PETG]: 9990,
   [MaterialType.ABS]: 10000,
   [MaterialType.ASA]: 18000,
   [MaterialType.PA_CF]: 29000,
