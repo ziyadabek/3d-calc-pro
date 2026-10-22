@@ -5,12 +5,11 @@ let fontBase64Cache: string | null = null;
 
 /**
  * Load Cyrillic-compatible font (Roboto Regular TTF) into jsPDF.
- * Uses local font file from public directory.
- * Caches font data for reuse across multiple PDF instances.
+ * Registers both 'normal' and 'bold' styles so jsPDF autoTable headers
+ * and bold summary rows never fall back to non-Cyrillic Helvetica.
  */
 export async function loadCyrillicFonts(doc: jsPDF): Promise<void> {
     try {
-        // If we don't have cached font data, fetch it
         if (!fontBase64Cache) {
             const fontPath = `${import.meta.env.BASE_URL}Roboto-Regular.ttf`;
             const response = await fetch(fontPath);
@@ -25,22 +24,17 @@ export async function loadCyrillicFonts(doc: jsPDF): Promise<void> {
                 throw new Error(`Font file too small: ${arrayBuffer.byteLength} bytes`);
             }
 
-            console.log(`✅ Font loaded: ${arrayBuffer.byteLength} bytes`);
             fontBase64Cache = arrayBufferToBase64(arrayBuffer);
         }
 
-        // Add font to THIS document instance (even if cached)
-        // This ensures every new jsPDF instance gets the font
+        // Register font for both normal and bold so Cyrillic never breaks on bold cells
         doc.addFileToVFS('Roboto-Regular.ttf', fontBase64Cache);
         doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+        doc.addFont('Roboto-Regular.ttf', 'Roboto', 'bold');
         doc.setFont('Roboto', 'normal');
-
-        console.log('✅ Cyrillic font registered in PDF');
-
     } catch (error) {
         console.error('❌ Failed to load Cyrillic font:', error);
         console.warn('⚠️ PDF will use default font. Cyrillic characters may display incorrectly.');
-        // Don't throw - let PDF generation continue with default font
     }
 }
 

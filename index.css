@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,31 +6,55 @@
 
 @layer base {
   body {
-    font-family: 'Inter', sans-serif;
-    background-color: #f8fafc; /* slate-50 */
-    color: #1e293b; /* slate-800 */
-    
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #f1f5f9; /* slate-100 */
-    }
-    ::-webkit-scrollbar-thumb {
-      @apply bg-slate-300 rounded-full;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      @apply bg-slate-400;
-    }
+    font-family: 'Inter', system-ui, sans-serif;
+    @apply bg-slate-100/80 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-100 dark:bg-slate-900;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400 dark:bg-slate-600;
+  }
+
+  /* Hide ugly number input spinners where custom steppers or clean inputs are used */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
   }
 }
 
 @layer utilities {
-  .glass-panel {
-    @apply bg-white border border-slate-200 shadow-sm transition-shadow hover:shadow-md;
+  .bg-engineering-grid {
+    background-image: radial-gradient(rgba(148, 163, 184, 0.28) 1px, transparent 1px);
+    background-size: 20px 20px;
   }
-  
+
+  .dark .bg-engineering-grid {
+    background-image: radial-gradient(rgba(51, 65, 85, 0.45) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .glass-panel {
+    @apply bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-card transition-all duration-200;
+  }
+
   .glass-input {
-    @apply bg-slate-50 border border-slate-200 focus:border-brand focus:ring-1 focus:ring-brand text-slate-800 outline-none transition-colors;
+    @apply bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 focus:bg-white dark:focus:bg-slate-800 focus:border-brand dark:focus:border-blue-500 focus:ring-2 focus:ring-brand/15 dark:focus:ring-blue-500/20 text-slate-900 dark:text-slate-100 outline-none transition-all;
+  }
+
+  .field-label {
+    @apply block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5;
   }
 }

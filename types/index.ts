@@ -1,4 +1,3 @@
-
 export enum MaterialType {
   PLA = 'PLA',
   PETG = 'PETG',
@@ -26,16 +25,36 @@ export interface MaterialConfig {
   name: string;
   pricePerKg: number;
   color: string; // UI accent color class
+  badge?: string;
 }
 
 export interface PrintPart {
   id: string;
   name: string;
-  weight: number;
-  hours: number;
+  weight: number; // Вес 1 детали в граммах
+  hours: number;  // Время печати 1 детали в часах
+  quantity: number; // Количество деталей (тираж)
   materialType: MaterialType;
-  materialPrice: number; // custom price for this part's material
+  materialPrice: number; // Цена за 1 кг для этой детали
   complexity: ComplexityLevel;
+}
+
+export interface PartCalculationBreakdown {
+  partId: string;
+  quantity: number;
+  unitWeight: number;
+  unitHours: number;
+  totalWeight: number;
+  totalHours: number;
+  materialCost: number;
+  workCost: number;
+  electricityCost: number;
+  baseCost: number;
+  markupCost: number;
+  complexityBonus: number;
+  unitPrice: number;
+  totalPrice: number;
+  pricePerGram: number;
 }
 
 export interface MaterialPrices {
@@ -67,7 +86,7 @@ export interface ModelingPrices {
 export interface CalcSettings {
   amortizationPerHour: number;
   electricityPerHour: number;
-  markupPercent: number; // deprecated - kept for backwards compatibility
+  markupPercent: number; // fallback
   materialPrices: MaterialPrices;
   materialMarkups: MaterialMarkups;
   wasteFactor: number; // коэффициент брака (например, 1.1 = +10%)
@@ -81,10 +100,18 @@ export interface CalcResults {
   workCost: number;
   electricityCost: number;
   laborCost: number;
+  modelingCost: number;
+  hardwareCost: number; // Реальная себестоимость печати (пластик + принтер + свет с браком)
   subtotal: number;
   markup: number;
   complexityBonus: number;
+  discountPercent: number;
+  discountAmount: number;
   minOrderSurcharge: number;
-  modelingCost: number;
+  netProfit: number; // Чистый доход мастера (маржа + сложность + моделирование + работа - скидка)
   total: number;
+  totalWeight: number;
+  totalHours: number;
+  totalQuantity: number;
+  partBreakdowns: Record<string, PartCalculationBreakdown>;
 }

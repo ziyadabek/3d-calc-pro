@@ -1,5 +1,22 @@
-
 import { MaterialType, MaterialConfig, CalcSettings, ComplexityLevel, ModelingComplexityLevel, MaterialPrices, MaterialMarkups } from '../types';
+
+/**
+ * 🔐 НАСТРОЙКИ ДОСТУПА АДМИНИСТРАТОРА (SHA-256 ХЭШИ)
+ * По умолчанию:
+ *   Логин:  admin
+ *   Пароль: admin123
+ *
+ * Как сгенерировать свои хэши:
+ * 1) Зайдите в калькулятор под админом -> Настройки -> вкладка «Пароль»
+ * 2) Введите желаемый логин и пароль -> нажмите «Скопировать код для constants/index.ts»
+ * 3) Вставьте скопированный блок ADMIN_CONFIG сюда!
+ */
+export const ADMIN_CONFIG = {
+  // SHA-256 от "admin"
+  loginHash: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
+  // SHA-256 от "admin123"
+  passwordHash: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9'
+};
 
 export const DEFAULT_MATERIAL_PRICES: MaterialPrices = {
   [MaterialType.PLA]: 11000,
@@ -22,20 +39,20 @@ export const DEFAULT_MATERIAL_MARKUPS: MaterialMarkups = {
 };
 
 export const DEFAULT_MATERIALS: Record<MaterialType, MaterialConfig> = {
-  [MaterialType.PLA]: { name: 'PLA', pricePerKg: DEFAULT_MATERIAL_PRICES[MaterialType.PLA], color: 'blue' },
-  [MaterialType.PETG]: { name: 'PETG', pricePerKg: DEFAULT_MATERIAL_PRICES[MaterialType.PETG], color: 'emerald' },
-  [MaterialType.ABS]: { name: 'ABS', pricePerKg: DEFAULT_MATERIAL_PRICES[MaterialType.ABS], color: 'amber' },
-  [MaterialType.ASA]: { name: 'ASA', pricePerKg: DEFAULT_MATERIAL_PRICES[MaterialType.ASA], color: 'orange' },
-  [MaterialType.PA_CF]: { name: 'PA-CF', pricePerKg: DEFAULT_MATERIAL_PRICES[MaterialType.PA_CF], color: 'red' },
-  [MaterialType.TPU]: { name: 'TPU', pricePerKg: DEFAULT_MATERIAL_PRICES[MaterialType.TPU], color: 'purple' },
-  [MaterialType.CUSTOM]: { name: 'Свой пластик', pricePerKg: DEFAULT_MATERIAL_PRICES[MaterialType.CUSTOM], color: 'slate' }
+  [MaterialType.PLA]: { name: 'PLA', pricePerKg: DEFAULT_MATERIAL_PRICES[MaterialType.PLA], color: 'blue', badge: 'Базовый' },
+  [MaterialType.PETG]: { name: 'PETG', pricePerKg: DEFAULT_MATERIAL_PRICES[MaterialType.PETG], color: 'emerald', badge: 'Хит / Прочный' },
+  [MaterialType.ABS]: { name: 'ABS', pricePerKg: DEFAULT_MATERIAL_PRICES[MaterialType.ABS], color: 'amber', badge: 'Технический' },
+  [MaterialType.ASA]: { name: 'ASA', pricePerKg: DEFAULT_MATERIAL_PRICES[MaterialType.ASA], color: 'orange', badge: 'УФ / Улица' },
+  [MaterialType.PA_CF]: { name: 'PA-CF', pricePerKg: DEFAULT_MATERIAL_PRICES[MaterialType.PA_CF], color: 'red', badge: 'Карбон / Инж.' },
+  [MaterialType.TPU]: { name: 'TPU', pricePerKg: DEFAULT_MATERIAL_PRICES[MaterialType.TPU], color: 'purple', badge: 'Гибкий резина' },
+  [MaterialType.CUSTOM]: { name: 'Свой пластик', pricePerKg: DEFAULT_MATERIAL_PRICES[MaterialType.CUSTOM], color: 'slate', badge: 'Своя цена' }
 };
 
-export const COMPLEXITY_MULTIPLIERS: Record<ComplexityLevel, { name: string, factor: number }> = {
-  [ComplexityLevel.SIMPLE]: { name: 'Простая (Тех. детали)', factor: 1.0 },
-  [ComplexityLevel.NORMAL]: { name: 'Средняя (Стандарт)', factor: 1.1 },
-  [ComplexityLevel.HARD]: { name: 'Сложная (Поддержки)', factor: 1.3 },
-  [ComplexityLevel.ULTRA]: { name: 'Ультра (Фигурки)', factor: 1.6 }
+export const COMPLEXITY_MULTIPLIERS: Record<ComplexityLevel, { name: string, shortName: string, factor: number, desc: string }> = {
+  [ComplexityLevel.SIMPLE]: { name: 'Простая (Тех. детали)', shortName: 'Простая', factor: 1.0, desc: 'Без поддержек, базовая геометрия' },
+  [ComplexityLevel.NORMAL]: { name: 'Средняя (Стандарт)', shortName: 'Стандарт', factor: 1.1, desc: 'Обычная печать, малые поддержки' },
+  [ComplexityLevel.HARD]: { name: 'Сложная (Поддержки)', shortName: 'Сложная', factor: 1.3, desc: 'Много поддержек, сложный отрыв' },
+  [ComplexityLevel.ULTRA]: { name: 'Ультра (Фигурки)', shortName: 'Ультра', factor: 1.6, desc: 'Высокая детализация / риск срыва' }
 };
 
 export const MODELING_COMPLEXITY_MULTIPLIERS: Record<ModelingComplexityLevel, { name: string, defaultPrice: number, description: string }> = {
@@ -47,7 +64,7 @@ export const MODELING_COMPLEXITY_MULTIPLIERS: Record<ModelingComplexityLevel, { 
 export const DEFAULT_SETTINGS: CalcSettings = {
   amortizationPerHour: 250,
   electricityPerHour: 40,
-  markupPercent: 200, // deprecated but kept for backwards compat
+  markupPercent: 200,
   materialPrices: { ...DEFAULT_MATERIAL_PRICES },
   materialMarkups: { ...DEFAULT_MATERIAL_MARKUPS },
   wasteFactor: 1.1, // +10% на брак и непредвиденные расходы

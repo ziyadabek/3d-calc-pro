@@ -1,10 +1,9 @@
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, '.', '');
+export default defineConfig(() => {
   return {
     base: '/3d-calc-pro/',
     server: {
@@ -17,11 +16,11 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
         manifest: {
-          name: '3D Calc Pro',
+          name: '3D Calc Pro — Studio Edition',
           short_name: '3D Calc Pro',
-          description: 'Premium 3D Print Calculator',
-          theme_color: '#020617', // slate-950
-          background_color: '#020617',
+          description: 'Инженерный калькулятор стоимости 3D-печати и моделирования',
+          theme_color: '#0f172a',
+          background_color: '#0f172a',
           display: 'standalone',
           icons: [
             {
@@ -54,10 +53,6 @@ export default defineConfig(({ mode }) => {
           }
         }
       }
-    },
-    define: {
-      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
     },
     resolve: {
       alias: {

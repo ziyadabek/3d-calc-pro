@@ -9,7 +9,6 @@ function loadSettingsFromStorage(): CalcSettings {
     const stored = localStorage.getItem(SETTINGS_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      // Ensure materialPrices and materialMarkups have all keys
       return {
         ...DEFAULT_SETTINGS,
         ...parsed,
@@ -27,7 +26,6 @@ function loadSettingsFromStorage(): CalcSettings {
 export function useSettings() {
   const [settings, setSettings] = useState<CalcSettings>(loadSettingsFromStorage);
 
-  // Save settings to localStorage whenever they change
   useEffect(() => {
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
@@ -36,5 +34,14 @@ export function useSettings() {
     }
   }, [settings]);
 
-  return { settings, setSettings };
+  const resetSettings = () => {
+    setSettings({
+      ...DEFAULT_SETTINGS,
+      materialPrices: { ...DEFAULT_SETTINGS.materialPrices },
+      materialMarkups: { ...DEFAULT_SETTINGS.materialMarkups },
+      modelingPrices: { ...DEFAULT_SETTINGS.modelingPrices }
+    });
+  };
+
+  return { settings, setSettings, resetSettings };
 }
